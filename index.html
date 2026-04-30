@@ -1430,4 +1430,1400 @@ function toast(msg) {
 loadDB().then(() => renderHome());
 </script>
 </body>
+</html>  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+/* ── SCREENS ── */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
+  overflow: hidden;
+}
+.screen.active { transform: translateX(0); }
+.screen.behind { transform: translateX(-6%); }
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--white);
+  flex: 1;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--text2);
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  font-size: 16px; color: var(--text);
+  transition: all 0.15s;
+}
+.back-btn:active { background: var(--s3); }
+
+/* ── SCROLL BODY ── */
+.scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+.scroll-body.no-pb { padding-bottom: 0; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  z-index: 50;
+}
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.nav-tab .icon { font-size: 20px; }
+.nav-tab .label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 0.5px; }
+.nav-tab.active .label { color: var(--gold); }
+.nav-tab.active .icon { filter: brightness(1.4); }
+.nav-tab-badge {
+  position: relative;
+  display: inline-block;
+}
+.badge-dot {
+  position: absolute;
+  top: -2px; right: -6px;
+  width: 8px; height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  border: 2px solid var(--s1);
+}
+
+/* ── LOGO SCREEN ── */
+.home-logo {
+  padding: 28px 20px 16px;
+}
+.logo-mark {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 4px;
+}
+.logo-sub { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+.stat-box {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.stat-box.gold { border-color: rgba(232,160,32,0.3); }
+.stat-box.green { border-color: rgba(52,199,123,0.3); }
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 2px; margin-bottom: 6px; }
+.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--white); line-height: 1; }
+.stat-box.gold .stat-val { color: var(--gold); }
+.stat-box.green .stat-val { color: var(--green); }
+.stat-hint { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* ── SEARCH ── */
+.search-wrap { padding: 0 16px 12px; }
+.search-box {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+  transition: border-color 0.15s;
+}
+.search-box:focus-within { border-color: var(--gold2); }
+.search-box input {
+  background: none; border: none; outline: none;
+  color: var(--white); font-family: var(--sans); font-size: 14px;
+  flex: 1; min-width: 0;
+}
+.search-box input::placeholder { color: var(--text2); }
+.search-icon { color: var(--text2); font-size: 15px; flex-shrink: 0; }
+
+/* ── FILTER CHIPS ── */
+.chips {
+  display: flex; gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+  border: 1px solid var(--border); color: var(--text2);
+  background: transparent; cursor: pointer; transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.chip.active { background: var(--gold-bg); border-color: var(--gold2); color: var(--gold); }
+
+/* ── LEAD LIST ── */
+.section-label {
+  font-family: var(--mono); font-size: 9px; color: var(--text2);
+  letter-spacing: 2px; padding: 0 16px 8px;
+}
+.leads-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+
+.lead-row {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all 0.2s;
+  -webkit-user-select: none; user-select: none;
+}
+.lead-row:active { background: var(--s2); transform: scale(0.985); }
+
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--s3); border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--gold);
+  flex-shrink: 0; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.lead-info { flex: 1; min-width: 0; }
+.lead-name { font-size: 14px; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-sub { font-family: var(--mono); font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-badges { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+
+.pill {
+  font-family: var(--mono); font-size: 8px; letter-spacing: 0.8px;
+  padding: 2px 7px; border-radius: 10px; font-weight: 500;
+}
+.pill-lead { background: var(--blue-bg); color: var(--blue); }
+.pill-cliente { background: var(--green-bg); color: var(--green); }
+.pill-novo { background: var(--gold-bg); color: var(--gold); }
+.pill-inativo { background: rgba(107,122,148,0.1); color: var(--text2); }
+
+.lead-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.lead-date { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+.task-indicator { font-family: var(--mono); font-size: 10px; color: var(--gold); }
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text2); font-family: var(--mono); font-size: 12px;
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed; bottom: calc(72px + var(--safe-bottom)); right: 20px;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--gold); color: #000;
+  font-size: 26px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(232,160,32,0.4);
+  z-index: 40; transition: all 0.2s;
+  border: none;
+}
+.fab:active { transform: scale(0.92); }
+
+/* ── DETAIL SCREEN ── */
+.detail-hero {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 18px;
+  display: flex; align-items: center; gap: 16px;
+}
+.avatar-lg {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--s3); border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--gold);
+  flex-shrink: 0; overflow: hidden; cursor: pointer;
+}
+.avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+.detail-name-block { flex: 1; min-width: 0; }
+.detail-name { font-size: 20px; font-weight: 600; color: var(--white); }
+.detail-location { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+/* ── DETAIL TABS ── */
+.tab-bar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto;
+  scrollbar-width: none; flex-shrink: 0;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 13px 18px; cursor: pointer; white-space: nowrap;
+  color: var(--text2); border-bottom: 2px solid transparent;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ── INFO TAB ── */
+.info-section { padding: 18px 16px 0; }
+.info-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+}
+.info-row {
+  display: flex; align-items: center;
+  padding: 13px 16px; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.info-content { flex: 1; min-width: 0; }
+.info-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1.5px; margin-bottom: 2px; }
+.info-val { font-size: 14px; color: var(--white); word-break: break-all; }
+.info-val.mono { font-family: var(--mono); font-size: 13px; }
+
+.timestamp-card {
+  background: var(--gold-bg2);
+  border: 1px solid rgba(232,160,32,0.2);
+  border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 12px;
+}
+.ts-label { font-family: var(--mono); font-size: 9px; color: var(--gold2); letter-spacing: 2px; margin-bottom: 4px; }
+.ts-val { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+
+.notes-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+}
+.notes-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
+
+.action-row { display: flex; gap: 10px; padding: 0 16px 16px; }
+.action-btn {
+  flex: 1; padding: 13px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  cursor: pointer; border: none; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.action-btn:active { transform: scale(0.97); }
+.btn-edit { background: var(--s2); color: var(--text); border: 1px solid var(--border2); }
+.btn-delete { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,90,90,0.3); }
+.btn-primary { background: var(--gold); color: #000; font-weight: 600; }
+.btn-ghost { background: var(--s2); color: var(--text2); border: 1px solid var(--border); }
+
+/* ── TASKS TAB ── */
+.tasks-section { padding: 16px; }
+.task-item {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.task-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--border2); background: transparent;
+  cursor: pointer; flex-shrink: 0; appearance: none;
+  transition: all 0.15s; position: relative;
+}
+.task-check:checked { background: var(--green); border-color: var(--green); }
+.task-check:checked::after {
+  content: '✓'; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%,-52%);
+  color: #000; font-size: 11px; font-weight: 700;
+}
+.task-text { flex: 1; font-size: 14px; color: var(--white); line-height: 1.4; }
+.task-text.done { text-decoration: line-through; color: var(--text2); }
+.task-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
+.task-del:active { color: var(--red); }
+
+.add-row { display: flex; gap: 8px; margin-top: 4px; }
+.add-input {
+  flex: 1; background: var(--s2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--white);
+  padding: 12px 14px; font-family: var(--sans); font-size: 14px; outline: none;
+  transition: border-color 0.15s;
+}
+.add-input:focus { border-color: var(--gold); }
+.add-input::placeholder { color: var(--text2); }
+.add-btn {
+  width: 46px; height: 46px; border-radius: var(--radius-sm);
+  background: var(--gold); border: none; color: #000;
+  font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s;
+}
+.add-btn:active { transform: scale(0.93); }
+
+/* ── TRIPS TAB ── */
+.trips-section { padding: 16px; }
+.trip-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+}
+.trip-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+.trip-city { font-size: 16px; font-weight: 600; color: var(--white); }
+.trip-dates { font-family: var(--mono); font-size: 11px; color: var(--gold); margin-top: 3px; }
+.trip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trip-field-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1.5px; margin-bottom: 3px; }
+.trip-field-val { font-size: 13px; color: var(--text); }
+.trip-field-val.price { color: var(--gold); font-family: var(--mono); }
+
+/* ── DOCS TAB ── */
+.docs-section { padding: 16px; }
+.doc-item {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.doc-item:active { background: var(--s2); }
+.doc-icon { font-size: 22px; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-size { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 2px; }
+.doc-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
+.doc-del:active { color: var(--red); }
+
+.upload-btn {
+  width: 100%;
+  background: var(--s2); border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 22px; text-align: center;
+  cursor: pointer; color: var(--text2);
+  font-size: 13px; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.upload-btn:active { border-color: var(--gold); color: var(--gold); }
+.upload-btn input { display: none; }
+.upload-icon { font-size: 26px; }
+
+/* ── GLOBAL TASKS ── */
+.global-section { padding: 16px; }
+.global-lead-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0 8px; cursor: pointer;
+}
+.global-lead-name { font-family: var(--mono); font-size: 12px; color: var(--gold); flex: 1; }
+.global-lead-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+
+/* ── GLOBAL TRIPS ── */
+.trip-lead-name {
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  letter-spacing: 1px; margin-bottom: 8px;
+}
+
+/* ── MODAL SHEET ── */
+.sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100; opacity: 0;
+  pointer-events: none; transition: opacity 0.3s;
+  backdrop-filter: blur(2px);
+}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--s1);
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  z-index: 101;
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  padding-bottom: var(--safe-bottom);
+}
+.sheet.open { transform: translateY(0); }
+
+.sheet-handle {
+  width: 36px; height: 4px; background: var(--border2);
+  border-radius: 2px; margin: 12px auto 0;
+}
+.sheet-title {
+  font-family: var(--mono); font-size: 14px; color: var(--gold);
+  padding: 16px 20px 0;
+}
+.sheet-body { padding: 16px 20px; }
+
+/* ── FORM ── */
+.f-group { margin-bottom: 14px; }
+.f-label { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 1px; margin-bottom: 6px; }
+.f-input, .f-select, .f-textarea {
+  width: 100%; background: var(--s2);
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  color: var(--white); padding: 12px 14px;
+  font-family: var(--sans); font-size: 14px; outline: none;
+  transition: border-color 0.15s; appearance: none;
+}
+.f-input:focus, .f-select:focus, .f-textarea:focus { border-color: var(--gold); }
+.f-textarea { resize: none; min-height: 80px; }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sheet-footer { display: flex; gap: 10px; padding: 0 20px 16px; }
+.sheet-footer .action-btn { flex: 1; padding: 14px; font-size: 12px; }
+
+/* ── STATUS PILLS ── */
+.status-pill {
+  display: inline-block;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 20px;
+}
+.sp-novo { background: var(--gold-bg); color: var(--gold); }
+.sp-lead { background: var(--blue-bg); color: var(--blue); }
+.sp-cliente { background: var(--green-bg); color: var(--green); }
+.sp-inativo { background: rgba(107,122,148,0.1); color: var(--text2); }
+.sp-confirmado { background: var(--gold-bg); color: var(--gold); }
+.sp-pago { background: var(--green-bg); color: var(--green); }
+.sp-concluído { background: var(--green-bg); color: var(--green); }
+.sp-cotação { background: rgba(107,122,148,0.1); color: var(--text2); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--s2); border: 1px solid var(--gold2);
+  border-radius: 30px; padding: 10px 20px;
+  font-family: var(--mono); font-size: 12px; color: var(--gold);
+  z-index: 200; pointer-events: none;
+  opacity: 0; transition: all 0.25s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── DESKTOP LAYOUT ── */
+@media (min-width: 768px) {
+  body { display: flex; justify-content: center; background: #08090c; }
+  #app-root {
+    width: 420px;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+  }
+  .screen { position: absolute; }
+  .bottom-nav { position: absolute; left: 0; right: 0; }
+  .fab { position: absolute; }
+  .sheet-overlay { position: absolute; }
+  .sheet { position: absolute; }
+  .toast { position: absolute; }
+}
+</style>
+</head>
+<body>
+<div id="app-root">
+
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" style="color:var(--gold);font-size:18px;letter-spacing:3px">ATLAS</div>
+      <div class="topbar-sub">PAINEL DE LEADS</div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div style="padding:20px 16px 12px">
+      <div class="stats-row" style="padding:0;margin-bottom:0">
+        <div class="stat-box gold">
+          <div class="stat-label">TOTAL</div>
+          <div class="stat-val" id="s-total">0</div>
+          <div class="stat-hint">contatos</div>
+        </div>
+        <div class="stat-box green">
+          <div class="stat-label">CLIENTES</div>
+          <div class="stat-val" id="s-clients">0</div>
+          <div class="stat-hint">ativos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">LEADS</div>
+          <div class="stat-val" id="s-leads">0</div>
+          <div class="stat-hint">potenciais</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">TAREFAS</div>
+          <div class="stat-val" id="s-tasks" style="color:var(--yellow)">0</div>
+          <div class="stat-hint">pendentes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input type="search" id="search-input" placeholder="Buscar por nome, celular, email..." oninput="renderHome()">
+      </div>
+    </div>
+
+    <div class="chips" id="chips-bar">
+      <div class="chip active" onclick="setFilter(this,'')" data-filter="">TODOS</div>
+      <div class="chip" onclick="setFilter(this,'novo')" data-filter="novo">NOVO</div>
+      <div class="chip" onclick="setFilter(this,'lead')" data-filter="lead">LEAD</div>
+      <div class="chip" onclick="setFilter(this,'cliente')" data-filter="cliente">CLIENTE</div>
+      <div class="chip" onclick="setFilter(this,'inativo')" data-filter="inativo">INATIVO</div>
+    </div>
+
+    <div class="section-label" id="list-count-label">— CONTATOS</div>
+    <div class="leads-list" id="leads-list"></div>
+  </div>
+
+  <button class="fab" onclick="openLeadSheet(null)">+</button>
+
+  <div class="bottom-nav" id="bottom-nav-home">
+    <div class="nav-tab active" onclick="/* already here */">
+      <span class="icon">◈</span>
+      <span class="label">LEADS</span>
+    </div>
+    <div class="nav-tab" onclick="goTo('screen-tasks')">
+      <div class="nav-tab-badge">
+        <span class="icon">◻</span>
+        <span class="badge-dot" id="task-dot" style="display:none"></span>
+      </div>
+      <span class="label">TAREFAS</span>
+    </div>
+    <div class="nav-tab" onclick="goTo('screen-trips-all')">
+      <span class="icon">✦</span>
+      <span class="label">VIAGENS</span>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-detail">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title" id="detail-topbar-title">Contato</div>
+  </div>
+
+  <div class="detail-hero">
+    <div class="avatar-lg" id="detail-avatar" onclick="triggerPhotoUpload()">?</div>
+    <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+    <div class="detail-name-block">
+      <div class="detail-name" id="detail-name">—</div>
+      <div class="detail-location" id="detail-location">—</div>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="detail-tab-bar">
+    <div class="tab-btn active" onclick="switchDetailTab('info',this)">INFO</div>
+    <div class="tab-btn" onclick="switchDetailTab('tasks',this)">TAREFAS</div>
+    <div class="tab-btn" onclick="switchDetailTab('trips',this)">VIAGENS</div>
+    <div class="tab-btn" onclick="switchDetailTab('docs',this)">DOCS</div>
+  </div>
+
+  <div class="scroll-body" id="detail-body"></div>
+</div>
+
+<div class="screen" id="screen-tasks">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title">Todas as Tarefas</div>
+  </div>
+  <div class="scroll-body">
+    <div class="global-section" id="global-tasks-body"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-trips-all">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title">Todas as Viagens</div>
+  </div>
+  <div class="scroll-body">
+    <div class="global-section" id="global-trips-body"></div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="overlay-lead" onclick="closeLeadSheet()"></div>
+<div class="sheet" id="sheet-lead">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-lead-title">+ NOVO LEAD</div>
+  <div class="sheet-body">
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">NOME *</div>
+        <input class="f-input" id="f-name" placeholder="Nome completo">
+      </div>
+      <div class="f-group">
+        <div class="f-label">STATUS</div>
+        <select class="f-select" id="f-status">
+          <option value="novo">Novo</option>
+          <option value="lead">Lead</option>
+          <option value="cliente">Cliente</option>
+          <option value="inativo">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">CELULAR</div>
+        <input class="f-input" id="f-phone" type="tel" placeholder="+55 11 9...">
+      </div>
+      <div class="f-group">
+        <div class="f-label">EMAIL</div>
+        <input class="f-input" id="f-email" type="email" placeholder="email@...">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">CIDADE</div>
+        <input class="f-input" id="f-city" placeholder="São Paulo">
+      </div>
+      <div class="f-group">
+        <div class="f-label">PAÍS</div>
+        <input class="f-input" id="f-country" placeholder="Brasil">
+      </div>
+    </div>
+    <div class="f-group">
+      <div class="f-label">CANAL</div>
+      <select class="f-select" id="f-channel">
+        <option>WhatsApp</option>
+        <option>Instagram</option>
+        <option>Email</option>
+        <option>Indicação</option>
+        <option>Site</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <div class="f-label">OBSERVAÇÕES</div>
+      <textarea class="f-textarea" id="f-notes" placeholder="Notas sobre o lead..."></textarea>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="action-btn btn-ghost" onclick="closeLeadSheet()">Cancelar</button>
+    <button class="action-btn btn-primary" onclick="saveLead()">Salvar</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="overlay-trip" onclick="closeTripSheet()"></div>
+<div class="sheet" id="sheet-trip">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-trip-title">✦ NOVA VIAGEM</div>
+  <div class="sheet-body">
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">DESTINO *</div>
+        <input class="f-input" id="t-city" placeholder="Paris, França">
+      </div>
+      <div class="f-group">
+        <div class="f-label">HOTEL</div>
+        <input class="f-input" id="t-hotel" placeholder="Hotel...">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">ENTRADA</div>
+        <input class="f-input" type="date" id="t-checkin">
+      </div>
+      <div class="f-group">
+        <div class="f-label">SAÍDA</div>
+        <input class="f-input" type="date" id="t-checkout">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">PREÇO (R$)</div>
+        <input class="f-input" type="number" id="t-price" placeholder="0,00">
+      </div>
+      <div class="f-group">
+        <div class="f-label">STATUS</div>
+        <select class="f-select" id="t-status">
+          <option value="cotação">Cotação</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="pago">Pago</option>
+          <option value="concluído">Concluído</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-group">
+      <div class="f-label">NOTAS</div>
+      <textarea class="f-textarea" id="t-notes" placeholder="Voo, traslado..."></textarea>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="action-btn btn-ghost" onclick="closeTripSheet()">Cancelar</button>
+    <button class="action-btn btn-primary" onclick="saveTrip()">Salvar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA E SUPABASE
+// ══════════════════════════════════════
+let db = { leads: [] };
+let currentFilter = '';
+let currentLeadId = null;
+let currentDetailTab = 'info';
+let editingLeadId = null;
+let tripLeadId = null;
+let editingTripIndex = null; // Variável nova para controlar se estamos editando
+let screenStack = ['screen-home'];
+
+const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Salva os dados na nuvem (Supabase)
+async function saveDB() {
+  const { error } = await supabaseClient
+    .from('atlas_data')
+    .upsert({ id: 'atlas_v2', data: db });
+    
+  if (error) {
+    console.error("Erro ao salvar:", error);
+    toast('⚠ Erro ao sincronizar');
+  }
+}
+
+// Carrega os dados da nuvem (Supabase)
+async function loadDB() {
+  const { data, error } = await supabaseClient
+    .from('atlas_data')
+    .select('data')
+    .eq('id', 'atlas_v2')
+    .single();
+
+  if (error) {
+    console.error("Erro ao carregar dados:", error);
+    return;
+  }
+
+  if (data && data.data) {
+    db = data.data;
+  }
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function fmtDT(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`;
+}
+function fmtMoney(v) {
+  if (!v) return '—';
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+function initials(name) {
+  return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function getDocIcon(type) {
+  if (!type) return '📎';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type === 'application/pdf') return '📄';
+  if (type.startsWith('text/')) return '📝';
+  return '📎';
+}
+function pendingTasks() {
+  return db.leads.reduce((a,l)=>a+(l.tasks||[]).filter(t=>!t.done).length, 0);
+}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function goTo(screenId) {
+  const prev = screenStack[screenStack.length-1];
+  document.getElementById(prev).classList.remove('active');
+  document.getElementById(prev).classList.add('behind');
+  document.getElementById(screenId).classList.add('active');
+  screenStack.push(screenId);
+  if (screenId === 'screen-tasks') renderGlobalTasks();
+  if (screenId === 'screen-trips-all') renderGlobalTrips();
+}
+
+function goBack() {
+  if (screenStack.length <= 1) return;
+  const cur = screenStack.pop();
+  const prev = screenStack[screenStack.length-1];
+  document.getElementById(cur).classList.remove('active');
+  document.getElementById(prev).classList.remove('behind');
+  document.getElementById(prev).classList.add('active');
+}
+
+function openDetail(id) {
+  currentLeadId = id;
+  currentDetailTab = 'info';
+  renderDetailScreen();
+  goTo('screen-detail');
+}
+
+// ══════════════════════════════════════
+//  FILTER
+// ══════════════════════════════════════
+function setFilter(el, f) {
+  currentFilter = f;
+  document.querySelectorAll('#chips-bar .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHome();
+}
+
+// ══════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════
+function renderHome() {
+  const search = (document.getElementById('search-input').value||'').toLowerCase();
+  let list = db.leads.filter(l => {
+    const mf = !currentFilter || l.status === currentFilter;
+    const ms = !search || l.name.toLowerCase().includes(search)
+      || (l.phone||'').includes(search)
+      || (l.email||'').toLowerCase().includes(search);
+    return mf && ms;
+  });
+
+  document.getElementById('s-total').textContent = db.leads.length;
+  document.getElementById('s-leads').textContent = db.leads.filter(l=>l.status==='lead').length;
+  document.getElementById('s-clients').textContent = db.leads.filter(l=>l.status==='cliente').length;
+  const pt = pendingTasks();
+  document.getElementById('s-tasks').textContent = pt;
+  const dot = document.getElementById('task-dot');
+  if (dot) dot.style.display = pt > 0 ? 'block' : 'none';
+
+  document.getElementById('list-count-label').textContent = `— ${list.length} CONTATO${list.length!==1?'S':''}`;
+
+  const container = document.getElementById('leads-list');
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><div>Nenhum contato encontrado</div></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(l => {
+    const tasks = (l.tasks||[]).filter(t=>!t.done).length;
+    const trips = (l.trips||[]).length;
+    const avatarHtml = l.photo ? `<img src="${l.photo}">` : initials(l.name);
+    const statusMap = {novo:'pill-novo',lead:'pill-lead',cliente:'pill-cliente',inativo:'pill-inativo'};
+    return `
+    <div class="lead-row" onclick="openDetail('${l.id}')">
+      <div class="avatar">${avatarHtml}</div>
+      <div class="lead-info">
+        <div class="lead-name">${l.name}</div>
+        <div class="lead-sub">${l.phone||l.email||l.channel||'—'}</div>
+        <div class="lead-badges">
+          <span class="pill ${statusMap[l.status]||'pill-novo'}">${(l.status||'novo').toUpperCase()}</span>
+          ${l.channel ? `<span class="pill" style="background:rgba(107,122,148,0.1);color:var(--text2)">${l.channel}</span>` : ''}
+          ${trips > 0 ? `<span class="pill" style="background:var(--gold-bg);color:var(--gold2)">✦${trips}</span>` : ''}
+        </div>
+      </div>
+      <div class="lead-right">
+        <div class="lead-date">${l.firstContact ? fmtDT(l.firstContact).split(' ')[0] : ''}</div>
+        ${tasks > 0 ? `<div class="task-indicator">◻ ${tasks}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  DETAIL SCREEN
+// ══════════════════════════════════════
+function renderDetailScreen() {
+  const l = db.leads.find(x=>x.id===currentLeadId);
+  if (!l) return;
+
+  document.getElementById('detail-topbar-title').textContent = l.name;
+  document.getElementById('detail-name').textContent = l.name;
+  document.getElementById('detail-location').textContent = [l.city, l.country].filter(Boolean).join(' · ') || '—';
+
+  const av = document.getElementById('detail-avatar');
+  av.innerHTML = l.photo ? `<img src="${l.photo}">` : initials(l.name);
+
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[['info','tasks','trips','docs'].indexOf(currentDetailTab)]?.classList.add('active');
+
+  renderDetailTab();
+}
+
+function switchDetailTab(tab, el) {
+  currentDetailTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderDetailTab();
+  document.getElementById('detail-body').scrollTop = 0;
+}
+
+function renderDetailTab() {
+  const l = db.leads.find(x=>x.id===currentLeadId);
+  if (!l) return;
+  const body = document.getElementById('detail-body');
+  if (currentDetailTab === 'info') body.innerHTML = renderInfoTab(l);
+  else if (currentDetailTab === 'tasks') body.innerHTML = renderTasksTab(l);
+  else if (currentDetailTab === 'trips') body.innerHTML = renderTripsTab(l);
+  else if (currentDetailTab === 'docs') body.innerHTML = renderDocsTab(l);
+}
+
+function renderInfoTab(l) {
+  const statusMap = {novo:'sp-novo',lead:'sp-lead',cliente:'sp-cliente',inativo:'sp-inativo'};
+  return `
+  <div class="info-section">
+    <div class="timestamp-card">
+      <div class="ts-label">PRIMEIRO CONTATO</div>
+      <div class="ts-val">${fmtDT(l.firstContact)}</div>
+    </div>
+    <div class="info-card">
+      <div class="info-row">
+        <div class="info-icon">📱</div>
+        <div class="info-content">
+          <div class="info-label">CELULAR</div>
+          <div class="info-val mono">${l.phone||'—'}</div>
+        </div>
+        ${l.phone ? `<a href="tel:${l.phone}" style="color:var(--green);font-size:20px;text-decoration:none">↗</a>` : ''}
+      </div>
+      <div class="info-row">
+        <div class="info-icon">✉️</div>
+        <div class="info-content">
+          <div class="info-label">EMAIL</div>
+          <div class="info-val mono">${l.email||'—'}</div>
+        </div>
+        ${l.email ? `<a href="mailto:${l.email}" style="color:var(--green);font-size:20px;text-decoration:none">↗</a>` : ''}
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📡</div>
+        <div class="info-content">
+          <div class="info-label">CANAL</div>
+          <div class="info-val">${l.channel||'—'}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📍</div>
+        <div class="info-content">
+          <div class="info-label">LOCALIZAÇÃO</div>
+          <div class="info-val">${[l.city,l.country].filter(Boolean).join(', ')||'—'}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◉</div>
+        <div class="info-content">
+          <div class="info-label">STATUS</div>
+          <div><span class="status-pill ${statusMap[l.status]||'sp-novo'}">${(l.status||'novo').toUpperCase()}</span></div>
+        </div>
+      </div>
+    </div>
+    ${l.notes ? `
+    <div class="notes-card">
+      <div class="info-label" style="margin-bottom:8px">OBSERVAÇÕES</div>
+      <div class="notes-text">${l.notes}</div>
+    </div>` : ''}
+  </div>
+  <div class="action-row" style="margin-top:8px">
+    <button class="action-btn btn-edit" onclick="openLeadSheet('${l.id}')">✎ Editar</button>
+    <button class="action-btn btn-delete" onclick="confirmDelete('${l.id}')">✕ Excluir</button>
+  </div>`;
+}
+
+function renderTasksTab(l) {
+  const tasks = l.tasks || [];
+  const done = tasks.filter(t=>t.done).length;
+  return `
+  <div class="tasks-section">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:14px">
+      ${tasks.length-done} ABERTA${tasks.length-done!==1?'S':''} · ${done} CONCLUÍDA${done!==1?'S':''}
+    </div>
+    ${tasks.map((t,i) => `
+      <div class="task-item">
+        <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask('${l.id}',${i})">
+        <div class="task-text ${t.done?'done':''}">${t.text}</div>
+        <button class="task-del" onclick="deleteTask('${l.id}',${i})">×</button>
+      </div>
+    `).join('')}
+    <div class="add-row">
+      <input class="add-input" id="new-task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')addTask('${l.id}')">
+      <button class="add-btn" onclick="addTask('${l.id}')">+</button>
+    </div>
+  </div>`;
+}
+
+function renderTripsTab(l) {
+  const trips = l.trips || [];
+  const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
+  return `
+  <div class="trips-section">
+    <button class="action-btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openTripSheet('${l.id}', null)">+ Nova Viagem</button>
+    ${!trips.length ? `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>` :
+    trips.map((t,i) => `
+      <div class="trip-card">
+        <div class="trip-top">
+          <div>
+            <div class="trip-city">✦ ${t.city}</div>
+            <div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+            <button class="task-del" style="font-size:16px;" onclick="openTripSheet('${l.id}', ${i})">✎</button>
+            <button class="task-del" onclick="deleteTrip('${l.id}',${i})">×</button>
+          </div>
+        </div>
+        <div class="trip-grid">
+          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+          ${t.notes ? `<div style="grid-column:1/-1"><div class="trip-field-label">NOTAS</div><div class="trip-field-val">${t.notes}</div></div>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function renderDocsTab(l) {
+  const docs = l.docs || [];
+  return `
+  <div class="docs-section">
+    ${docs.map((d,i) => `
+      <div class="doc-item" onclick="viewDoc('${l.id}',${i})">
+        <div class="doc-icon">${getDocIcon(d.type)}</div>
+        <div class="doc-info">
+          <div class="doc-name">${d.name}</div>
+          <div class="doc-size">${(d.size/1024).toFixed(0)} KB</div>
+        </div>
+        <button class="doc-del" onclick="event.stopPropagation();deleteDoc('${l.id}',${i})">×</button>
+      </div>
+    `).join('')}
+    <label class="upload-btn">
+      <input type="file" multiple onchange="handleDocs(event,'${l.id}')">
+      <div class="upload-icon">📎</div>
+      <div>Toque para enviar arquivos</div>
+      <div style="font-size:11px;color:var(--text2)">Fotos, PDFs, documentos...</div>
+    </label>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+//  LEAD FORM
+// ══════════════════════════════════════
+function openLeadSheet(id) {
+  editingLeadId = id;
+  if (id) {
+    const l = db.leads.find(x=>x.id===id);
+    document.getElementById('sheet-lead-title').textContent = '✎ EDITAR';
+    document.getElementById('f-name').value = l.name;
+    document.getElementById('f-phone').value = l.phone||'';
+    document.getElementById('f-email').value = l.email||'';
+    document.getElementById('f-city').value = l.city||'';
+    document.getElementById('f-country').value = l.country||'';
+    document.getElementById('f-notes').value = l.notes||'';
+    document.getElementById('f-status').value = l.status||'novo';
+    document.getElementById('f-channel').value = l.channel||'WhatsApp';
+  } else {
+    document.getElementById('sheet-lead-title').textContent = '+ NOVO LEAD';
+    ['f-name','f-phone','f-email','f-city','f-country','f-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-status').value = 'novo';
+    document.getElementById('f-channel').value = 'WhatsApp';
+  }
+  document.getElementById('overlay-lead').classList.add('open');
+  document.getElementById('sheet-lead').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(), 350);
+}
+function closeLeadSheet() {
+  document.getElementById('overlay-lead').classList.remove('open');
+  document.getElementById('sheet-lead').classList.remove('open');
+}
+function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('⚠ Nome é obrigatório'); return; }
+  if (editingLeadId) {
+    const l = db.leads.find(x=>x.id===editingLeadId);
+    l.name=name; l.phone=document.getElementById('f-phone').value.trim();
+    l.email=document.getElementById('f-email').value.trim();
+    l.city=document.getElementById('f-city').value.trim();
+    l.country=document.getElementById('f-country').value.trim();
+    l.notes=document.getElementById('f-notes').value.trim();
+    l.status=document.getElementById('f-status').value;
+    l.channel=document.getElementById('f-channel').value;
+  } else {
+    db.leads.unshift({
+      id:genId(), name,
+      phone:document.getElementById('f-phone').value.trim(),
+      email:document.getElementById('f-email').value.trim(),
+      city:document.getElementById('f-city').value.trim(),
+      country:document.getElementById('f-country').value.trim(),
+      notes:document.getElementById('f-notes').value.trim(),
+      status:document.getElementById('f-status').value,
+      channel:document.getElementById('f-channel').value,
+      firstContact:new Date().toISOString(),
+      tasks:[], trips:[], docs:[], photo:null
+    });
+  }
+  saveDB(); closeLeadSheet(); renderHome();
+  if (editingLeadId && currentLeadId===editingLeadId) renderDetailScreen();
+  toast(editingLeadId ? '✓ Lead atualizado' : '✓ Lead criado');
+}
+
+function confirmDelete(id) {
+  if (confirm('Excluir este contato permanentemente?')) {
+    db.leads = db.leads.filter(l=>l.id!==id);
+    saveDB(); goBack(); renderHome(); toast('✓ Excluído');
+  }
+}
+
+// ══════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════
+function addTask(leadId) {
+  const inp = document.getElementById('new-task-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks = l.tasks||[];
+  l.tasks.push({text, done:false});
+  saveDB(); inp.value=''; renderDetailTab(); renderHome();
+}
+function toggleTask(leadId, idx) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks[idx].done = !l.tasks[idx].done;
+  saveDB(); renderDetailTab(); renderHome();
+}
+function deleteTask(leadId, idx) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks.splice(idx,1);
+  saveDB(); renderDetailTab(); renderHome();
+}
+
+// ══════════════════════════════════════
+//  TRIPS (EDITAR E CRIAR)
+// ══════════════════════════════════════
+function openTripSheet(leadId, tripIndex = null) {
+  tripLeadId = leadId;
+  editingTripIndex = tripIndex; // Marca se estamos editando ou criando
+  
+  const titleEl = document.getElementById('sheet-trip-title');
+
+  if (tripIndex !== null) {
+    // Modo Edição: Puxa os dados antigos para preencher os campos
+    titleEl.textContent = '✎ EDITAR VIAGEM';
+    const trip = db.leads.find(x=>x.id===leadId).trips[tripIndex];
+    document.getElementById('t-city').value = trip.city || '';
+    document.getElementById('t-hotel').value = trip.hotel || '';
+    document.getElementById('t-checkin').value = trip.checkin || '';
+    document.getElementById('t-checkout').value = trip.checkout || '';
+    document.getElementById('t-price').value = trip.price || '';
+    document.getElementById('t-status').value = trip.status || 'cotação';
+    document.getElementById('t-notes').value = trip.notes || '';
+  } else {
+    // Modo Nova Viagem: Limpa tudo
+    titleEl.textContent = '✦ NOVA VIAGEM';
+    ['t-city','t-hotel','t-checkin','t-checkout','t-price','t-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('t-status').value='cotação';
+  }
+
+  document.getElementById('overlay-trip').classList.add('open');
+  document.getElementById('sheet-trip').classList.add('open');
+}
+
+function closeTripSheet() {
+  editingTripIndex = null;
+  document.getElementById('overlay-trip').classList.remove('open');
+  document.getElementById('sheet-trip').classList.remove('open');
+}
+
+function saveTrip() {
+  const city = document.getElementById('t-city').value.trim();
+  if (!city) { toast('⚠ Destino é obrigatório'); return; }
+  
+  const l = db.leads.find(x=>x.id===tripLeadId);
+  l.trips = l.trips || [];
+
+  const tripData = {
+    city, 
+    hotel: document.getElementById('t-hotel').value.trim(),
+    checkin: document.getElementById('t-checkin').value,
+    checkout: document.getElementById('t-checkout').value,
+    price: document.getElementById('t-price').value,
+    status: document.getElementById('t-status').value,
+    notes: document.getElementById('t-notes').value.trim()
+  };
+
+  if (editingTripIndex !== null) {
+    // Atualiza a viagem existente
+    l.trips[editingTripIndex] = tripData;
+    toast('✓ Viagem atualizada');
+  } else {
+    // Adiciona uma viagem nova
+    l.trips.push(tripData);
+    toast('✓ Viagem adicionada');
+  }
+
+  saveDB(); 
+  closeTripSheet(); 
+  renderDetailTab(); 
+  renderHome();
+}
+
+function deleteTrip(leadId, idx) {
+  if (!confirm('Remover esta viagem?')) return;
+  db.leads.find(x=>x.id===leadId).trips.splice(idx,1);
+  saveDB(); renderDetailTab();
+}
+
+// ══════════════════════════════════════
+//  DOCS
+// ══════════════════════════════════════
+function handleDocs(event, leadId) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.docs = l.docs||[];
+  const files = Array.from(event.target.files);
+  let done = 0;
+  files.forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      l.docs.push({name:file.name, type:file.type, size:file.size, data:e.target.result});
+      if (++done===files.length) { saveDB(); renderDetailTab(); toast(`✓ ${files.length} arquivo(s) enviado(s)`); }
+    };
+    r.readAsDataURL(file);
+  });
+}
+function deleteDoc(leadId, idx) {
+  db.leads.find(x=>x.id===leadId).docs.splice(idx,1);
+  saveDB(); renderDetailTab();
+}
+function viewDoc(leadId, idx) {
+  const d = db.leads.find(x=>x.id===leadId).docs[idx];
+  const w = window.open();
+  w.document.write(`<title>${d.name}</title><body style="margin:0;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center">`);
+  if (d.type.startsWith('image/')) w.document.write(`<img src="${d.data}" style="max-width:100%;max-height:100vh">`);
+  else w.document.write(`<embed src="${d.data}" width="100%" height="100%" style="min-height:100vh">`);
+  w.document.write('</body>');
+}
+
+// ══════════════════════════════════════
+//  PHOTO
+// ══════════════════════════════════════
+function triggerPhotoUpload() { document.getElementById('photo-file-input').click(); }
+function handlePhotoUpload(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    db.leads.find(x=>x.id===currentLeadId).photo = e.target.result;
+    saveDB(); renderDetailScreen(); renderHome();
+    toast('✓ Foto atualizada');
+  };
+  r.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════
+//  GLOBAL SCREENS
+// ══════════════════════════════════════
+function renderGlobalTasks() {
+  const container = document.getElementById('global-tasks-body');
+  let html = '';
+  db.leads.forEach(l => {
+    const pending = (l.tasks||[]).filter(t=>!t.done);
+    if (!pending.length) return;
+    html += `<div style="margin-bottom:20px">
+      <div class="global-lead-header" onclick="openDetail('${l.id}');goTo('screen-detail')">
+        <div class="global-lead-name">${l.name}</div>
+        <div class="global-lead-count">${pending.length} pendente${pending.length!==1?'s':''} →</div>
+      </div>`;
+    pending.forEach(t => {
+      const realIdx = l.tasks.indexOf(t);
+      html += `<div class="task-item">
+        <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
+        <div class="task-text">${t.text}</div>
+        <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = `<div class="empty-state"><div class="empty-icon">◻</div><div>Nenhuma tarefa pendente 🎉</div></div>`;
+  container.innerHTML = html;
+}
+
+function renderGlobalTrips() {
+  const container = document.getElementById('global-trips-body');
+  let html = '';
+  const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
+  db.leads.forEach(l => {
+    if (!(l.trips||[]).length) return;
+    html += `<div style="margin-bottom:20px">
+      <div class="trip-lead-name">${l.name.toUpperCase()}</div>`;
+    l.trips.forEach(t => {
+      html += `<div class="trip-card">
+        <div class="trip-top">
+          <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
+          <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+        </div>
+        <div class="trip-grid">
+          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>`;
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+loadDB().then(() => renderHome());
+</script>
+</body>
 </html>
