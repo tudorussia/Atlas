@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -348,7 +348,7 @@ body {
 @media (min-width: 768px) {
   body { background: #08090c; display: flex; justify-content: center; }
   #app-root {
-    width: 100%; max-width: 800px; /* Expande melhor no desktop */
+    width: 100%; max-width: 800px; /* Expande no desktop */
     position: relative; height: 100vh;
     box-shadow: 0 0 60px rgba(0,0,0,0.8);
     border-left: 1px solid var(--border); border-right: 1px solid var(--border);
@@ -406,7 +406,13 @@ body {
       <div class="chip" onclick="setFilter(this,'inativo')" data-filter="inativo">INATIVO</div>
     </div>
 
-    <div class="section-label" id="list-count-label">— CONTATOS</div>
+    <div style="padding: 0 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="section-label" id="list-count-label" style="padding:0;">— CONTATOS</div>
+      <button onclick="forcarResgateLocal()" style="background:transparent; border:1px solid var(--gold); color:var(--gold); font-family:var(--mono); font-size:9px; padding:4px 8px; border-radius:6px; cursor:pointer;">
+        📥 Resgatar Backup do Celular
+      </button>
+    </div>
+
     <div class="leads-list" id="leads-list"></div>
   </div>
 
@@ -512,11 +518,10 @@ body {
 
 </div> <script>
 // ══════════════════════════════════════
-//  SISTEMA DE LOGIN (SEGURANÇA BÁSICA)
+//  SISTEMA DE LOGIN
 // ══════════════════════════════════════
 function checkLogin() {
   const pwd = document.getElementById('login-pwd').value;
-  // A SENHA ESTÁ AQUI ABAIXO: Você pode mudar 'tudorussia' para a senha que desejar.
   if (pwd === 'tudorussia') {
     localStorage.setItem('tr_auth_v1', 'yes');
     iniciarApp();
@@ -525,18 +530,10 @@ function checkLogin() {
   }
 }
 
-// Verifica se já fez login no passado para não pedir a senha toda vez
 if (localStorage.getItem('tr_auth_v1') === 'yes') {
   iniciarApp();
 }
 
-function iniciarApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-root').style.display = 'block';
-  loadDB().then(() => renderHome());
-}
-
-// Permitir login apertando a tecla Enter
 document.getElementById('login-pwd').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') checkLogin();
 });
@@ -566,6 +563,59 @@ async function loadDB() {
   const { data, error } = await supabaseClient.from('atlas_data').select('data').eq('id', 'atlas_v2').single();
   if (error) { console.error("Erro ao carregar dados:", error); return; }
   if (data && data.data) db = data.data;
+}
+
+// ── FUNÇÃO MANUAL DE RESGATE (Salva a sua vida) ──
+async function forcarResgateLocal() {
+  if(!confirm('Isso vai buscar os dados que ficaram salvos na memória antiga deste celular e enviar para a nuvem. Tem certeza?')) return;
+  
+  try {
+    const req = indexedDB.open('atlas_db', 1);
+    req.onsuccess = (e) => {
+      const idb = e.target.result;
+      if (!idb.objectStoreNames.contains('data')) { toast('Nenhum dado local encontrado neste aparelho.'); return; }
+      const tx = idb.transaction('data', 'readonly');
+      const storeReq = tx.objectStore('data').get('atlas_v2');
+      storeReq.onsuccess = async () => {
+        if (storeReq.result) {
+          try {
+            const oldDb = JSON.parse(storeReq.result);
+            if (oldDb.leads && oldDb.leads.length > 0) {
+              
+              // Adiciona os clientes do celular que ainda não estão na nuvem
+              let added = 0;
+              const idsNaNuvem = new Set(db.leads.map(l => l.id));
+              
+              oldDb.leads.forEach(leadAntigo => {
+                if(!idsNaNuvem.has(leadAntigo.id)) {
+                  db.leads.push(leadAntigo);
+                  added++;
+                }
+              });
+
+              if (added > 0) {
+                await saveDB();
+                toast(`✓ ${added} contatos resgatados com sucesso!`);
+                renderHome();
+              } else {
+                toast('✓ Todos os clientes antigos já estão na nuvem.');
+              }
+            } else {
+              toast('Backup local está vazio.');
+            }
+          } catch(err) { toast('Erro ao ler backup local'); }
+        } else { toast('Nenhum backup encontrado.'); }
+      };
+    };
+    req.onerror = () => toast('Erro ao acessar a memória do celular.');
+  } catch(err) { toast('Erro no navegador ao resgatar dados.'); }
+}
+
+async function iniciarApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'block';
+  await loadDB();
+  renderHome();
 }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -811,7 +861,7 @@ function confirmDelete(id) {
 }
 
 // ══════════════════════════════════════
-//  TASKS
+//  TASKS E TRIPS
 // ══════════════════════════════════════
 function addTask(leadId) {
   const inp = document.getElementById('new-task-input'); const text = inp.value.trim();
@@ -821,9 +871,6 @@ function addTask(leadId) {
 function toggleTask(leadId, idx) { const l = db.leads.find(x=>x.id===leadId); l.tasks[idx].done = !l.tasks[idx].done; saveDB(); renderDetailTab(); renderHome(); }
 function deleteTask(leadId, idx) { const l = db.leads.find(x=>x.id===leadId); l.tasks.splice(idx,1); saveDB(); renderDetailTab(); renderHome(); }
 
-// ══════════════════════════════════════
-//  TRIPS
-// ══════════════════════════════════════
 function openTripSheet(leadId, tripIndex = null) {
   tripLeadId = leadId; editingTripIndex = tripIndex;
   if (tripIndex !== null) {
@@ -852,7 +899,7 @@ function saveTrip() {
 function deleteTrip(leadId, idx) { if (!confirm('Remover esta viagem?')) return; db.leads.find(x=>x.id===leadId).trips.splice(idx,1); saveDB(); renderDetailTab(); }
 
 // ══════════════════════════════════════
-//  DOCS (Upload e Link)
+//  DOCS (Upload e Link) E FOTO
 // ══════════════════════════════════════
 function addDocLink(leadId) {
   const inp = document.getElementById('new-link-input');
@@ -961,16 +1008,10 @@ function renderGlobalTrips() {
   container.innerHTML = html;
 }
 
-// ══════════════════════════════════════
-//  TOAST E INICIALIZAÇÃO
-// ══════════════════════════════════════
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
 }
-
-// O loadDB e o renderHome agora acontecem depois do Login com sucesso!
 </script>
-</body>
 </html>
