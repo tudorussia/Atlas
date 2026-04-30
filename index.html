@@ -162,7 +162,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); min-
       <div class="chip" onclick="setFilter(this,'inativo')" data-filter="inativo">INATIVO</div>
     </div>
 
-    <div class="section-label" id="list-count-label">— CONTATOS</div>
+    <div style="padding: 0 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="section-label" id="list-count-label" style="padding:0;">— CONTATOS</div>
+      <button onclick="forcarResgateLocal()" style="background:transparent; border:1px solid var(--gold); color:var(--gold); font-family:var(--mono); font-size:9px; padding:4px 8px; border-radius:6px; cursor:pointer;">
+        📥 Resgatar Backup do Celular
+      </button>
+    </div>
+
     <div class="leads-list" id="leads-list"></div>
   </div>
 
@@ -231,22 +237,19 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); min-
 </div>
 
 <script>
-function checkLogin() {
-  if (document.getElementById('login-pwd').value === 'tudorussia') { localStorage.setItem('tr_auth_v1', 'yes'); iniciarApp(); } 
-  else { alert('Senha incorreta!'); }
-}
-if (localStorage.getItem('tr_auth_v1') === 'yes') iniciarApp();
-document.getElementById('login-pwd').addEventListener('keypress', e => { if (e.key === 'Enter') checkLogin(); });
+// 1. CHAVES E CONFIGURAÇÃO DA NUVEM (COLOCADO NO TOPO PARA CORRIGIR O BUG!)
+const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// 2. VARIÁVEIS GLOBAIS
 let db = { leads: [] };
 let currentFilter = ''; let currentLeadId = null; let currentDetailTab = 'info'; let editingLeadId = null; let tripLeadId = null; let editingTripIndex = null; let screenStack = ['screen-home'];
 
-const supabaseClient = window.supabase.createClient('https://ulxjamnjoyvevbhfhjui.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg');
-
-// ── O CÓDIGO QUE VAI GRITAR O ERRO ──
+// 3. FUNÇÕES DE BANCO DE DADOS
 async function saveDB() {
   try {
-    const { error } = await supabaseClient.from('atlas_data').update({ data: db }).eq('id', 'atlas_v2');
+    const { error } = await supabaseClient.from('atlas_data').upsert({ id: 'atlas_v2', data: db });
     if (error) {
       alert('❌ O Supabase REJEITOU o seu salvamento!\nMotivo: ' + error.message);
     }
@@ -257,13 +260,58 @@ async function loadDB() {
   try {
     const { data, error } = await supabaseClient.from('atlas_data').select('data').eq('id', 'atlas_v2').single();
     if (error) { 
-      alert('❌ O Supabase BLOQUEOU a leitura!\nMotivo: ' + error.message); 
+      console.log("Banco na nuvem pode estar vazio ainda.");
       return; 
     }
     if (data && data.data) db = data.data;
   } catch(err) { alert('❌ Erro no código ao ler: ' + err.message); }
 }
 
+// 4. FUNÇÃO DE RESGATE MANUAL (O SEU SALVA-VIDAS!)
+async function forcarResgateLocal() {
+  if(!confirm('Isso vai buscar os dados escondidos na memória antiga do seu Safari e enviar para a nuvem. Tem certeza?')) return;
+  
+  try {
+    const req = indexedDB.open('atlas_db', 1);
+    req.onsuccess = (e) => {
+      const idb = e.target.result;
+      if (!idb.objectStoreNames.contains('data')) { toast('Nenhum dado local encontrado neste aparelho.'); return; }
+      const tx = idb.transaction('data', 'readonly');
+      const storeReq = tx.objectStore('data').get('atlas_v2');
+      storeReq.onsuccess = async () => {
+        if (storeReq.result) {
+          try {
+            const oldDb = JSON.parse(storeReq.result);
+            if (oldDb.leads && oldDb.leads.length > 0) {
+              let added = 0;
+              const idsNaNuvem = new Set(db.leads.map(l => l.id));
+              
+              oldDb.leads.forEach(leadAntigo => {
+                if(!idsNaNuvem.has(leadAntigo.id)) {
+                  db.leads.push(leadAntigo);
+                  added++;
+                }
+              });
+
+              if (added > 0) {
+                await saveDB();
+                toast(`✓ ${added} contatos resgatados com sucesso!`);
+                renderHome();
+              } else {
+                toast('✓ Os clientes antigos já estão na nuvem.');
+              }
+            } else {
+              toast('Backup local está vazio.');
+            }
+          } catch(err) { toast('Erro ao ler backup local'); }
+        } else { toast('Nenhum backup encontrado.'); }
+      };
+    };
+    req.onerror = () => toast('Erro ao acessar a memória do celular.');
+  } catch(err) { toast('Erro no navegador ao resgatar dados.'); }
+}
+
+// 5. INICIALIZAÇÃO DO APP E LOGIN
 async function iniciarApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-root').style.display = 'block';
@@ -271,6 +319,14 @@ async function iniciarApp() {
   renderHome();
 }
 
+function checkLogin() {
+  if (document.getElementById('login-pwd').value === 'tudorussia') { localStorage.setItem('tr_auth_v1', 'yes'); iniciarApp(); } 
+  else { alert('Senha incorreta!'); }
+}
+if (localStorage.getItem('tr_auth_v1') === 'yes') iniciarApp();
+document.getElementById('login-pwd').addEventListener('keypress', e => { if (e.key === 'Enter') checkLogin(); });
+
+// 6. O RESTO DAS FUNÇÕES DO APP
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function fmtDT(iso) { if (!iso) return '—'; const d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function fmtDate(s) { if (!s) return '—'; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; }
