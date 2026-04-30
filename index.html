@@ -805,7 +805,7 @@ body {
 
 <script>
 // ══════════════════════════════════════
-//  DATA
+//  DATA E SUPABASE
 // ══════════════════════════════════════
 let db = { leads: [] };
 let currentFilter = '';
@@ -815,14 +815,15 @@ let editingLeadId = null;
 let tripLeadId = null;
 let screenStack = ['screen-home'];
 
-// ── SUPABASE CONFIGURATION ──
 const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// VARIÁVEL CORRIGIDA AQUI
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Salva os dados na nuvem (Supabase)
 async function saveDB() {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('atlas_data')
     .upsert({ id: 'atlas_v2', data: db });
     
@@ -834,7 +835,7 @@ async function saveDB() {
 
 // Carrega os dados da nuvem (Supabase)
 async function loadDB() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('atlas_data')
     .select('data')
     .eq('id', 'atlas_v2')
@@ -888,7 +889,6 @@ function goTo(screenId) {
   document.getElementById(prev).classList.add('behind');
   document.getElementById(screenId).classList.add('active');
   screenStack.push(screenId);
-  // render content
   if (screenId === 'screen-tasks') renderGlobalTasks();
   if (screenId === 'screen-trips-all') renderGlobalTrips();
 }
@@ -932,7 +932,6 @@ function renderHome() {
     return mf && ms;
   });
 
-  // stats
   document.getElementById('s-total').textContent = db.leads.length;
   document.getElementById('s-leads').textContent = db.leads.filter(l=>l.status==='lead').length;
   document.getElementById('s-clients').textContent = db.leads.filter(l=>l.status==='cliente').length;
@@ -952,9 +951,7 @@ function renderHome() {
   container.innerHTML = list.map(l => {
     const tasks = (l.tasks||[]).filter(t=>!t.done).length;
     const trips = (l.trips||[]).length;
-    const avatarHtml = l.photo
-      ? `<img src="${l.photo}">`
-      : initials(l.name);
+    const avatarHtml = l.photo ? `<img src="${l.photo}">` : initials(l.name);
     const statusMap = {novo:'pill-novo',lead:'pill-lead',cliente:'pill-cliente',inativo:'pill-inativo'};
     return `
     <div class="lead-row" onclick="openDetail('${l.id}')">
@@ -985,13 +982,11 @@ function renderDetailScreen() {
 
   document.getElementById('detail-topbar-title').textContent = l.name;
   document.getElementById('detail-name').textContent = l.name;
-  document.getElementById('detail-location').textContent =
-    [l.city, l.country].filter(Boolean).join(' · ') || '—';
+  document.getElementById('detail-location').textContent = [l.city, l.country].filter(Boolean).join(' · ') || '—';
 
   const av = document.getElementById('detail-avatar');
   av.innerHTML = l.photo ? `<img src="${l.photo}">` : initials(l.name);
 
-  // reset tabs
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn')[['info','tasks','trips','docs'].indexOf(currentDetailTab)]?.classList.add('active');
 
@@ -1024,7 +1019,6 @@ function renderInfoTab(l) {
       <div class="ts-label">PRIMEIRO CONTATO</div>
       <div class="ts-val">${fmtDT(l.firstContact)}</div>
     </div>
-
     <div class="info-card">
       <div class="info-row">
         <div class="info-icon">📱</div>
@@ -1064,7 +1058,6 @@ function renderInfoTab(l) {
         </div>
       </div>
     </div>
-
     ${l.notes ? `
     <div class="notes-card">
       <div class="info-label" style="margin-bottom:8px">OBSERVAÇÕES</div>
@@ -1093,8 +1086,7 @@ function renderTasksTab(l) {
       </div>
     `).join('')}
     <div class="add-row">
-      <input class="add-input" id="new-task-input" placeholder="Nova tarefa para ${l.name.split(' ')[0]}..."
-        onkeydown="if(event.key==='Enter')addTask('${l.id}')">
+      <input class="add-input" id="new-task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')addTask('${l.id}')">
       <button class="add-btn" onclick="addTask('${l.id}')">+</button>
     </div>
   </div>`;
@@ -1120,18 +1112,9 @@ function renderTripsTab(l) {
           </div>
         </div>
         <div class="trip-grid">
-          <div>
-            <div class="trip-field-label">HOTEL</div>
-            <div class="trip-field-val">${t.hotel||'—'}</div>
-          </div>
-          <div>
-            <div class="trip-field-label">PREÇO</div>
-            <div class="trip-field-val price">${fmtMoney(t.price)}</div>
-          </div>
-          ${t.notes ? `<div style="grid-column:1/-1">
-            <div class="trip-field-label">NOTAS</div>
-            <div class="trip-field-val">${t.notes}</div>
-          </div>` : ''}
+          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+          ${t.notes ? `<div style="grid-column:1/-1"><div class="trip-field-label">NOTAS</div><div class="trip-field-val">${t.notes}</div></div>` : ''}
         </div>
       </div>
     `).join('')}
