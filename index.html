@@ -1,755 +1,1433 @@
+
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ATLAS - Painel de Leads</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ATLAS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e12;
+  --s1: #12151b;
+  --s2: #181c24;
+  --s3: #1f2430;
+  --border: #252c3a;
+  --border2: #323d52;
+  --gold: #e8a020;
+  --gold2: #c8881a;
+  --gold-bg: rgba(232,160,32,0.1);
+  --gold-bg2: rgba(232,160,32,0.06);
+  --green: #34c77b;
+  --green-bg: rgba(52,199,123,0.12);
+  --blue: #4a9eff;
+  --blue-bg: rgba(74,158,255,0.12);
+  --red: #ff5a5a;
+  --red-bg: rgba(255,90,90,0.12);
+  --yellow: #ffd166;
+  --text: #b8c4d8;
+  --text2: #6b7a94;
+  --text3: #3d4a60;
+  --white: #edf2fc;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-        :root {
-            --bg-main: #0d1117;
-            --bg-card: #161b22;
-            --bg-input: #1f242c;
-            --border-color: #30363d;
-            --text-gold: #ffb800;
-            --bg-gold: #ffb800;
-            --text-muted: #8b949e;
-        }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-        body {
-            background-color: var(--bg-main);
-            color: #c9d1d9;
-            font-family: 'Inter', sans-serif;
-            padding-bottom: env(safe-area-inset-bottom);
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
-        }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
 
-        /* Estilização Base */
-        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; }
-        .gold-text { color: var(--text-gold); }
-        .gold-bg { background-color: var(--bg-gold); color: #000; }
-        
-        input, textarea, select {
-            background: var(--bg-input) !important;
-            border: 1px solid var(--border-color) !important;
-            color: white !important;
-            font-size: 16px !important; /* Previne zoom no iPhone */
-        }
-        input:focus, textarea:focus, select:focus { border-color: var(--text-gold) !important; outline: none; }
+/* ── SCREENS ── */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
+  overflow: hidden;
+}
+.screen.active { transform: translateX(0); }
+.screen.behind { transform: translateX(-6%); }
 
-        /* Modais estilo Bottom Sheet (iOS) */
-        .bottom-sheet {
-            position: fixed; top: 100%; left: 0; right: 0; bottom: 0;
-            background: var(--bg-card);
-            z-index: 100;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column;
-        }
-        .bottom-sheet.open { transform: translateY(-100%); top: auto; height: 90vh; }
-        .sheet-handle { width: 40px; height: 4px; background: var(--border-color); border-radius: 2px; margin: 10px auto; }
-        .sheet-content { overflow-y: auto; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); flex: 1; }
-        .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 90;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .overlay.active { opacity: 1; pointer-events: auto; }
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--white);
+  flex: 1;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--text2);
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  font-size: 16px; color: var(--text);
+  transition: all 0.15s;
+}
+.back-btn:active { background: var(--s3); }
 
-        /* Abas de Navegação (Filtros e Info) */
-        .pill-filter { border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; transition: all 0.2s; white-space: nowrap; }
-        .pill-filter.active { border-color: var(--text-gold); color: var(--text-gold); }
-        
-        .tab-nav { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; padding-bottom: 8px; border-bottom: 2px solid transparent; }
-        .tab-nav.active { color: var(--text-gold); border-bottom-color: var(--text-gold); }
+/* ── SCROLL BODY ── */
+.scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+.scroll-body.no-pb { padding-bottom: 0; }
 
-        /* Utilitários */
-        .hidden-view { display: none !important; }
-        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .status-novo { background: rgba(255, 184, 0, 0.2); color: var(--text-gold); }
-        .status-lead { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-        .status-cliente { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
-        .status-inativo { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
-        
-        /* Avatar Circular */
-        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-input); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; color: var(--text-gold); }
-    </style>
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  z-index: 50;
+}
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.nav-tab .icon { font-size: 20px; }
+.nav-tab .label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 0.5px; }
+.nav-tab.active .label { color: var(--gold); }
+.nav-tab.active .icon { filter: brightness(1.4); }
+.nav-tab-badge {
+  position: relative;
+  display: inline-block;
+}
+.badge-dot {
+  position: absolute;
+  top: -2px; right: -6px;
+  width: 8px; height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  border: 2px solid var(--s1);
+}
+
+/* ── LOGO SCREEN ── */
+.home-logo {
+  padding: 28px 20px 16px;
+}
+.logo-mark {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 4px;
+}
+.logo-sub { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+.stat-box {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.stat-box.gold { border-color: rgba(232,160,32,0.3); }
+.stat-box.green { border-color: rgba(52,199,123,0.3); }
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 2px; margin-bottom: 6px; }
+.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--white); line-height: 1; }
+.stat-box.gold .stat-val { color: var(--gold); }
+.stat-box.green .stat-val { color: var(--green); }
+.stat-hint { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* ── SEARCH ── */
+.search-wrap { padding: 0 16px 12px; }
+.search-box {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+  transition: border-color 0.15s;
+}
+.search-box:focus-within { border-color: var(--gold2); }
+.search-box input {
+  background: none; border: none; outline: none;
+  color: var(--white); font-family: var(--sans); font-size: 14px;
+  flex: 1; min-width: 0;
+}
+.search-box input::placeholder { color: var(--text2); }
+.search-icon { color: var(--text2); font-size: 15px; flex-shrink: 0; }
+
+/* ── FILTER CHIPS ── */
+.chips {
+  display: flex; gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+  border: 1px solid var(--border); color: var(--text2);
+  background: transparent; cursor: pointer; transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.chip.active { background: var(--gold-bg); border-color: var(--gold2); color: var(--gold); }
+
+/* ── LEAD LIST ── */
+.section-label {
+  font-family: var(--mono); font-size: 9px; color: var(--text2);
+  letter-spacing: 2px; padding: 0 16px 8px;
+}
+.leads-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+
+.lead-row {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all 0.2s;
+  -webkit-user-select: none; user-select: none;
+}
+.lead-row:active { background: var(--s2); transform: scale(0.985); }
+
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--s3); border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--gold);
+  flex-shrink: 0; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.lead-info { flex: 1; min-width: 0; }
+.lead-name { font-size: 14px; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-sub { font-family: var(--mono); font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-badges { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+
+.pill {
+  font-family: var(--mono); font-size: 8px; letter-spacing: 0.8px;
+  padding: 2px 7px; border-radius: 10px; font-weight: 500;
+}
+.pill-lead { background: var(--blue-bg); color: var(--blue); }
+.pill-cliente { background: var(--green-bg); color: var(--green); }
+.pill-novo { background: var(--gold-bg); color: var(--gold); }
+.pill-inativo { background: rgba(107,122,148,0.1); color: var(--text2); }
+
+.lead-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.lead-date { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+.task-indicator { font-family: var(--mono); font-size: 10px; color: var(--gold); }
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text2); font-family: var(--mono); font-size: 12px;
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed; bottom: calc(72px + var(--safe-bottom)); right: 20px;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--gold); color: #000;
+  font-size: 26px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(232,160,32,0.4);
+  z-index: 40; transition: all 0.2s;
+  border: none;
+}
+.fab:active { transform: scale(0.92); }
+
+/* ── DETAIL SCREEN ── */
+.detail-hero {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 18px;
+  display: flex; align-items: center; gap: 16px;
+}
+.avatar-lg {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--s3); border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--gold);
+  flex-shrink: 0; overflow: hidden; cursor: pointer;
+}
+.avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+.detail-name-block { flex: 1; min-width: 0; }
+.detail-name { font-size: 20px; font-weight: 600; color: var(--white); }
+.detail-location { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+/* ── DETAIL TABS ── */
+.tab-bar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto;
+  scrollbar-width: none; flex-shrink: 0;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 13px 18px; cursor: pointer; white-space: nowrap;
+  color: var(--text2); border-bottom: 2px solid transparent;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ── INFO TAB ── */
+.info-section { padding: 18px 16px 0; }
+.info-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+}
+.info-row {
+  display: flex; align-items: center;
+  padding: 13px 16px; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.info-content { flex: 1; min-width: 0; }
+.info-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1.5px; margin-bottom: 2px; }
+.info-val { font-size: 14px; color: var(--white); word-break: break-all; }
+.info-val.mono { font-family: var(--mono); font-size: 13px; }
+
+.timestamp-card {
+  background: var(--gold-bg2);
+  border: 1px solid rgba(232,160,32,0.2);
+  border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 12px;
+}
+.ts-label { font-family: var(--mono); font-size: 9px; color: var(--gold2); letter-spacing: 2px; margin-bottom: 4px; }
+.ts-val { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+
+.notes-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+}
+.notes-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
+
+.action-row { display: flex; gap: 10px; padding: 0 16px 16px; }
+.action-btn {
+  flex: 1; padding: 13px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  cursor: pointer; border: none; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.action-btn:active { transform: scale(0.97); }
+.btn-edit { background: var(--s2); color: var(--text); border: 1px solid var(--border2); }
+.btn-delete { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,90,90,0.3); }
+.btn-primary { background: var(--gold); color: #000; font-weight: 600; }
+.btn-ghost { background: var(--s2); color: var(--text2); border: 1px solid var(--border); }
+
+/* ── TASKS TAB ── */
+.tasks-section { padding: 16px; }
+.task-item {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.task-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--border2); background: transparent;
+  cursor: pointer; flex-shrink: 0; appearance: none;
+  transition: all 0.15s; position: relative;
+}
+.task-check:checked { background: var(--green); border-color: var(--green); }
+.task-check:checked::after {
+  content: '✓'; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%,-52%);
+  color: #000; font-size: 11px; font-weight: 700;
+}
+.task-text { flex: 1; font-size: 14px; color: var(--white); line-height: 1.4; }
+.task-text.done { text-decoration: line-through; color: var(--text2); }
+.task-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
+.task-del:active { color: var(--red); }
+
+.add-row { display: flex; gap: 8px; margin-top: 4px; }
+.add-input {
+  flex: 1; background: var(--s2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--white);
+  padding: 12px 14px; font-family: var(--sans); font-size: 14px; outline: none;
+  transition: border-color 0.15s;
+}
+.add-input:focus { border-color: var(--gold); }
+.add-input::placeholder { color: var(--text2); }
+.add-btn {
+  width: 46px; height: 46px; border-radius: var(--radius-sm);
+  background: var(--gold); border: none; color: #000;
+  font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s;
+}
+.add-btn:active { transform: scale(0.93); }
+
+/* ── TRIPS TAB ── */
+.trips-section { padding: 16px; }
+.trip-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+}
+.trip-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+.trip-city { font-size: 16px; font-weight: 600; color: var(--white); }
+.trip-dates { font-family: var(--mono); font-size: 11px; color: var(--gold); margin-top: 3px; }
+.trip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trip-field-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1.5px; margin-bottom: 3px; }
+.trip-field-val { font-size: 13px; color: var(--text); }
+.trip-field-val.price { color: var(--gold); font-family: var(--mono); }
+
+/* ── DOCS TAB ── */
+.docs-section { padding: 16px; }
+.doc-item {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.doc-item:active { background: var(--s2); }
+.doc-icon { font-size: 22px; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-size { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 2px; }
+.doc-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
+.doc-del:active { color: var(--red); }
+
+.upload-btn {
+  width: 100%;
+  background: var(--s2); border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 22px; text-align: center;
+  cursor: pointer; color: var(--text2);
+  font-size: 13px; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.upload-btn:active { border-color: var(--gold); color: var(--gold); }
+.upload-btn input { display: none; }
+.upload-icon { font-size: 26px; }
+
+/* ── GLOBAL TASKS ── */
+.global-section { padding: 16px; }
+.global-lead-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0 8px; cursor: pointer;
+}
+.global-lead-name { font-family: var(--mono); font-size: 12px; color: var(--gold); flex: 1; }
+.global-lead-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+
+/* ── GLOBAL TRIPS ── */
+.trip-lead-name {
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  letter-spacing: 1px; margin-bottom: 8px;
+}
+
+/* ── MODAL SHEET ── */
+.sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100; opacity: 0;
+  pointer-events: none; transition: opacity 0.3s;
+  backdrop-filter: blur(2px);
+}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--s1);
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  z-index: 101;
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  padding-bottom: var(--safe-bottom);
+}
+.sheet.open { transform: translateY(0); }
+
+.sheet-handle {
+  width: 36px; height: 4px; background: var(--border2);
+  border-radius: 2px; margin: 12px auto 0;
+}
+.sheet-title {
+  font-family: var(--mono); font-size: 14px; color: var(--gold);
+  padding: 16px 20px 0;
+}
+.sheet-body { padding: 16px 20px; }
+
+/* ── FORM ── */
+.f-group { margin-bottom: 14px; }
+.f-label { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 1px; margin-bottom: 6px; }
+.f-input, .f-select, .f-textarea {
+  width: 100%; background: var(--s2);
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  color: var(--white); padding: 12px 14px;
+  font-family: var(--sans); font-size: 14px; outline: none;
+  transition: border-color 0.15s; appearance: none;
+}
+.f-input:focus, .f-select:focus, .f-textarea:focus { border-color: var(--gold); }
+.f-textarea { resize: none; min-height: 80px; }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sheet-footer { display: flex; gap: 10px; padding: 0 20px 16px; }
+.sheet-footer .action-btn { flex: 1; padding: 14px; font-size: 12px; }
+
+/* ── STATUS PILLS ── */
+.status-pill {
+  display: inline-block;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 20px;
+}
+.sp-novo { background: var(--gold-bg); color: var(--gold); }
+.sp-lead { background: var(--blue-bg); color: var(--blue); }
+.sp-cliente { background: var(--green-bg); color: var(--green); }
+.sp-inativo { background: rgba(107,122,148,0.1); color: var(--text2); }
+.sp-confirmado { background: var(--gold-bg); color: var(--gold); }
+.sp-pago { background: var(--green-bg); color: var(--green); }
+.sp-concluído { background: var(--green-bg); color: var(--green); }
+.sp-cotação { background: rgba(107,122,148,0.1); color: var(--text2); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--s2); border: 1px solid var(--gold2);
+  border-radius: 30px; padding: 10px 20px;
+  font-family: var(--mono); font-size: 12px; color: var(--gold);
+  z-index: 200; pointer-events: none;
+  opacity: 0; transition: all 0.25s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── DESKTOP LAYOUT ── */
+@media (min-width: 768px) {
+  body { display: flex; justify-content: center; background: #08090c; }
+  #app-root {
+    width: 420px;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+  }
+  .screen { position: absolute; }
+  .bottom-nav { position: absolute; left: 0; right: 0; }
+  .fab { position: absolute; }
+  .sheet-overlay { position: absolute; }
+  .sheet { position: absolute; }
+  .toast { position: absolute; }
+}
+</style>
 </head>
 <body>
+<div id="app-root">
 
-    <div id="sync-status" class="fixed top-0 left-0 right-0 bg-[#000] text-xs text-center py-1 text-gray-400 z-50 hidden transition-all">
-        <i class="fa fa-sync fa-spin"></i> Salvando na nuvem...
+<!-- ══════════════════════════════════════
+     SCREEN: HOME (Leads & Clientes)
+═══════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" style="color:var(--gold);font-size:18px;letter-spacing:3px">ATLAS</div>
+      <div class="topbar-sub">PAINEL DE LEADS</div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Stats -->
+    <div style="padding:20px 16px 12px">
+      <div class="stats-row" style="padding:0;margin-bottom:0">
+        <div class="stat-box gold">
+          <div class="stat-label">TOTAL</div>
+          <div class="stat-val" id="s-total">0</div>
+          <div class="stat-hint">contatos</div>
+        </div>
+        <div class="stat-box green">
+          <div class="stat-label">CLIENTES</div>
+          <div class="stat-val" id="s-clients">0</div>
+          <div class="stat-hint">ativos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">LEADS</div>
+          <div class="stat-val" id="s-leads">0</div>
+          <div class="stat-hint">potenciais</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">TAREFAS</div>
+          <div class="stat-val" id="s-tasks" style="color:var(--yellow)">0</div>
+          <div class="stat-hint">pendentes</div>
+        </div>
+      </div>
     </div>
 
-    <div id="view-dashboard" class="pt-6 px-4 pb-24 min-h-screen">
-        <header class="mb-6 flex justify-between items-center mt-4">
-            <div>
-                <h1 class="text-xl font-bold tracking-widest gold-text">ATLAS</h1>
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Painel de Leads</p>
-            </div>
-        </header>
-
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Total</p>
-                <h2 id="stat-total" class="text-3xl font-bold gold-text mt-1">-</h2>
-                <p class="text-[10px] text-gray-600 mt-1">contatos</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Clientes</p>
-                <h2 id="stat-clientes" class="text-3xl font-bold text-green-500 mt-1">-</h2>
-                <p class="text-[10px] text-gray-600 mt-1">ativos</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Leads</p>
-                <h2 id="stat-leads" class="text-3xl font-bold text-blue-400 mt-1">-</h2>
-                <p class="text-[10px] text-gray-600 mt-1">potenciais</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Tarefas</p>
-                <h2 id="stat-tarefas" class="text-3xl font-bold text-orange-400 mt-1">-</h2>
-                <p class="text-[10px] text-gray-600 mt-1">pendentes globais</p>
-            </div>
-        </div>
-
-        <div class="relative mb-4">
-            <input type="text" id="search-input" placeholder="Buscar por nome, celular, email..." class="w-full p-3 pl-10 rounded-lg text-sm bg-[#161b22]" onkeyup="filterList()">
-            <i class="fa fa-search absolute left-3 top-3.5 text-gray-500 text-sm"></i>
-        </div>
-        
-        <div class="flex overflow-x-auto gap-2 pb-2 mb-4" id="filter-pills" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
-            <button class="pill-filter active" onclick="setFilter('Todos')">Todos</button>
-            <button class="pill-filter" onclick="setFilter('Novo')">Novo</button>
-            <button class="pill-filter" onclick="setFilter('Lead')">Lead</button>
-            <button class="pill-filter" onclick="setFilter('Cliente')">Cliente</button>
-            <button class="pill-filter" onclick="setFilter('Inativo')">Inativo</button>
-        </div>
-
-        <p class="text-[10px] text-gray-600 uppercase tracking-wider mb-3">— <span id="list-count">0</span> Contatos</p>
-        <div id="contacts-list" class="space-y-3">
-            <div class="text-center py-10 text-gray-600"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
-        </div>
-
-        <button onclick="openModal('sheet-lead')" class="fixed bottom-6 right-6 w-14 h-14 gold-bg rounded-full shadow-[0_0_15px_rgba(255,184,0,0.3)] flex items-center justify-center text-xl z-40">
-            <i class="fa fa-plus"></i>
-        </button>
+    <!-- Search -->
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input type="search" id="search-input" placeholder="Buscar por nome, celular, email..." oninput="renderHome()">
+      </div>
     </div>
 
-    <div id="view-contact" class="hidden-view pt-6 px-4 pb-10 min-h-screen">
-        <div class="mt-4 flex items-center mb-6">
-            <button onclick="closeContactView()" class="text-gray-400 w-10 h-10 flex items-center justify-center bg-[#161b22] rounded-full mr-3"><i class="fa fa-chevron-left text-sm"></i></button>
-            <h2 id="cv-header-name" class="text-lg font-bold">Nome</h2>
-        </div>
-
-        <div class="flex items-center gap-4 mb-8">
-            <div id="cv-avatar" class="avatar w-16 h-16 text-2xl">D</div>
-            <div>
-                <h1 id="cv-name" class="text-2xl font-bold">Daniel</h1>
-                <div class="h-0.5 w-6 bg-gray-700 mt-2"></div>
-            </div>
-        </div>
-
-        <div class="flex gap-6 border-b border-[#30363d] mb-6">
-            <button class="tab-nav active" id="tab-btn-info" onclick="switchContactTab('info')">Info</button>
-            <button class="tab-nav" id="tab-btn-tarefas" onclick="switchContactTab('tarefas')">Tarefas</button>
-            <button class="tab-nav" id="tab-btn-viagens" onclick="switchContactTab('viagens')">Viagens</button>
-            <button class="tab-nav" id="tab-btn-docs" onclick="switchContactTab('docs')">Docs</button>
-        </div>
-
-        <div id="tab-content-info" class="space-y-4">
-            <div class="card p-4 border border-[#ffb800]/20 bg-[#161b22]">
-                <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Primeiro Contato</p>
-                <p id="cv-date" class="text-sm gold-text font-mono">--/--/---- --:--</p>
-            </div>
-            
-            <div class="card overflow-hidden">
-                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
-                    <i class="fa fa-mobile-alt text-gray-500 w-4 text-center"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500">Celular</p><p id="cv-phone" class="text-sm">-</p></div>
-                </div>
-                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
-                    <i class="fa fa-envelope text-gray-500 w-4 text-center"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500">Email</p><p id="cv-email" class="text-sm">-</p></div>
-                </div>
-                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
-                    <i class="fa fa-satellite-dish text-gray-500 w-4 text-center"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500">Canal</p><p id="cv-channel" class="text-sm">-</p></div>
-                </div>
-                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
-                    <i class="fa fa-map-pin text-gray-500 w-4 text-center"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500">Localização</p><p id="cv-location" class="text-sm">-</p></div>
-                </div>
-                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
-                    <i class="far fa-dot-circle text-gray-500 w-4 text-center"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500 mb-1">Status</p><span id="cv-status" class="status-badge">-</span></div>
-                </div>
-                <div class="p-4 flex items-start gap-3">
-                    <i class="fa fa-align-left text-gray-500 w-4 text-center mt-1"></i>
-                    <div><p class="text-[10px] uppercase text-gray-500">Observações</p><p id="cv-notes" class="text-sm text-gray-400 whitespace-pre-line mt-1">-</p></div>
-                </div>
-            </div>
-
-            <div class="flex gap-3 mt-6">
-                <button onclick="editCurrentContact()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm flex justify-center items-center gap-2"><i class="fa fa-pen text-gray-400 text-xs"></i> Editar</button>
-                <button onclick="deleteCurrentContact()" class="flex-1 bg-[#2d1114] text-red-400 p-3 rounded-lg text-sm border border-red-900/50 flex justify-center items-center gap-2"><i class="fa fa-times text-xs"></i> Excluir</button>
-            </div>
-        </div>
-
-        <div id="tab-content-tarefas" class="hidden-view space-y-4">
-            <p class="text-[10px] text-gray-600 uppercase tracking-wider uppercase mb-2"><span id="cv-tasks-open">0</span> Abertas • <span id="cv-tasks-done">0</span> Concluídas</p>
-            <div class="flex gap-2 mb-4">
-                <input type="text" id="new-task-input" placeholder="Nova tarefa..." class="w-full p-3 rounded-lg text-sm bg-[#161b22]">
-                <button onclick="addTask()" class="gold-bg w-12 rounded-lg flex-shrink-0 flex items-center justify-center"><i class="fa fa-plus"></i></button>
-            </div>
-            <div id="cv-tasks-list" class="space-y-2"></div>
-        </div>
-
-        <div id="tab-content-viagens" class="hidden-view space-y-4">
-            <button onclick="openModal('sheet-trip')" class="w-full gold-bg p-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2 mb-4">+ Nova Viagem</button>
-            <div id="cv-trips-list" class="space-y-3"></div>
-        </div>
-
-        <div id="tab-content-docs" class="hidden-view space-y-4">
-            <div class="card p-4 bg-[#161b22]">
-                <p class="text-[10px] text-gray-400 uppercase mb-3">Salvar Link do Google Drive</p>
-                <input type="text" id="new-doc-name" placeholder="Nome do arquivo (ex: Passaporte)" class="w-full p-3 rounded-lg text-sm mb-2">
-                <input type="url" id="new-doc-url" placeholder="Cole o link do Drive aqui..." class="w-full p-3 rounded-lg text-sm mb-3">
-                <button onclick="addDoc()" class="w-full bg-[#1f242c] border border-[var(--border-color)] p-3 rounded-lg text-sm gold-text font-bold">Salvar Documento</button>
-            </div>
-            <p class="text-[10px] text-gray-600 uppercase tracking-wider mt-4 mb-2">Arquivos Salvos</p>
-            <div id="cv-docs-list" class="space-y-2"></div>
-        </div>
+    <!-- Chips -->
+    <div class="chips" id="chips-bar">
+      <div class="chip active" onclick="setFilter(this,'')" data-filter="">TODOS</div>
+      <div class="chip" onclick="setFilter(this,'novo')" data-filter="novo">NOVO</div>
+      <div class="chip" onclick="setFilter(this,'lead')" data-filter="lead">LEAD</div>
+      <div class="chip" onclick="setFilter(this,'cliente')" data-filter="cliente">CLIENTE</div>
+      <div class="chip" onclick="setFilter(this,'inativo')" data-filter="inativo">INATIVO</div>
     </div>
 
+    <!-- List -->
+    <div class="section-label" id="list-count-label">— CONTATOS</div>
+    <div class="leads-list" id="leads-list"></div>
+  </div>
 
-    <div class="overlay" id="overlay" onclick="closeAllModals()"></div>
+  <!-- FAB -->
+  <button class="fab" onclick="openLeadSheet(null)">+</button>
 
-    <div id="sheet-lead" class="bottom-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-content">
-            <h3 class="text-[10px] uppercase font-bold gold-text mb-4" id="modal-lead-title">+ NOVO LEAD</h3>
-            <form id="form-lead" class="space-y-4">
-                <input type="hidden" id="f-id">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Nome *</label>
-                        <input type="text" id="f-name" placeholder="Nome completo" class="w-full p-3 rounded-lg mt-1" required>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Status</label>
-                        <select id="f-status" class="w-full p-3 rounded-lg mt-1 text-sm">
-                            <option value="Novo">Novo</option>
-                            <option value="Lead">Lead</option>
-                            <option value="Cliente">Cliente</option>
-                            <option value="Inativo">Inativo</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Celular</label>
-                        <input type="tel" id="f-phone" placeholder="+55..." class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Email</label>
-                        <input type="email" id="f-email" placeholder="email@..." class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Cidade</label>
-                        <input type="text" id="f-city" placeholder="Ex: Curitiba" class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">País</label>
-                        <input type="text" id="f-country" placeholder="Ex: Brasil" class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase ml-1">Canal</label>
-                    <select id="f-channel" class="w-full p-3 rounded-lg mt-1 text-sm">
-                        <option value="WhatsApp">WhatsApp</option>
-                        <option value="Instagram">Instagram</option>
-                        <option value="Email">Email</option>
-                        <option value="Indicação">Indicação</option>
-                        <option value="Site">Site Passaporte</option>
-                        <option value="Outro">Outro</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase ml-1">Observações</label>
-                    <textarea id="f-notes" placeholder="Notas sobre o lead..." class="w-full p-3 rounded-lg mt-1 text-sm h-20"></textarea>
-                </div>
-                
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeAllModals()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm text-gray-300">Cancelar</button>
-                    <button type="submit" class="flex-1 gold-bg p-3 rounded-lg text-sm font-bold">Salvar</button>
-                </div>
-            </form>
+  <!-- Bottom Nav -->
+  <div class="bottom-nav" id="bottom-nav-home">
+    <div class="nav-tab active" onclick="/* already here */">
+      <span class="icon">◈</span>
+      <span class="label">LEADS</span>
+    </div>
+    <div class="nav-tab" onclick="goTo('screen-tasks')">
+      <div class="nav-tab-badge">
+        <span class="icon">◻</span>
+        <span class="badge-dot" id="task-dot" style="display:none"></span>
+      </div>
+      <span class="label">TAREFAS</span>
+    </div>
+    <div class="nav-tab" onclick="goTo('screen-trips-all')">
+      <span class="icon">✦</span>
+      <span class="label">VIAGENS</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN: DETAIL
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title" id="detail-topbar-title">Contato</div>
+  </div>
+
+  <div class="detail-hero">
+    <div class="avatar-lg" id="detail-avatar" onclick="triggerPhotoUpload()">?</div>
+    <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+    <div class="detail-name-block">
+      <div class="detail-name" id="detail-name">—</div>
+      <div class="detail-location" id="detail-location">—</div>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="detail-tab-bar">
+    <div class="tab-btn active" onclick="switchDetailTab('info',this)">INFO</div>
+    <div class="tab-btn" onclick="switchDetailTab('tasks',this)">TAREFAS</div>
+    <div class="tab-btn" onclick="switchDetailTab('trips',this)">VIAGENS</div>
+    <div class="tab-btn" onclick="switchDetailTab('docs',this)">DOCS</div>
+  </div>
+
+  <div class="scroll-body" id="detail-body"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN: ALL TASKS
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-tasks">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title">Todas as Tarefas</div>
+  </div>
+  <div class="scroll-body">
+    <div class="global-section" id="global-tasks-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN: ALL TRIPS
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-trips-all">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBack()">‹</div>
+    <div class="topbar-title">Todas as Viagens</div>
+  </div>
+  <div class="scroll-body">
+    <div class="global-section" id="global-trips-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: LEAD FORM
+═══════════════════════════════════════ -->
+<div class="sheet-overlay" id="overlay-lead" onclick="closeLeadSheet()"></div>
+<div class="sheet" id="sheet-lead">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-lead-title">+ NOVO LEAD</div>
+  <div class="sheet-body">
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">NOME *</div>
+        <input class="f-input" id="f-name" placeholder="Nome completo">
+      </div>
+      <div class="f-group">
+        <div class="f-label">STATUS</div>
+        <select class="f-select" id="f-status">
+          <option value="novo">Novo</option>
+          <option value="lead">Lead</option>
+          <option value="cliente">Cliente</option>
+          <option value="inativo">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">CELULAR</div>
+        <input class="f-input" id="f-phone" type="tel" placeholder="+55 11 9...">
+      </div>
+      <div class="f-group">
+        <div class="f-label">EMAIL</div>
+        <input class="f-input" id="f-email" type="email" placeholder="email@...">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">CIDADE</div>
+        <input class="f-input" id="f-city" placeholder="São Paulo">
+      </div>
+      <div class="f-group">
+        <div class="f-label">PAÍS</div>
+        <input class="f-input" id="f-country" placeholder="Brasil">
+      </div>
+    </div>
+    <div class="f-group">
+      <div class="f-label">CANAL</div>
+      <select class="f-select" id="f-channel">
+        <option>WhatsApp</option>
+        <option>Instagram</option>
+        <option>Email</option>
+        <option>Indicação</option>
+        <option>Site</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <div class="f-label">OBSERVAÇÕES</div>
+      <textarea class="f-textarea" id="f-notes" placeholder="Notas sobre o lead..."></textarea>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="action-btn btn-ghost" onclick="closeLeadSheet()">Cancelar</button>
+    <button class="action-btn btn-primary" onclick="saveLead()">Salvar</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: TRIP FORM
+═══════════════════════════════════════ -->
+<div class="sheet-overlay" id="overlay-trip" onclick="closeTripSheet()"></div>
+<div class="sheet" id="sheet-trip">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">✦ NOVA VIAGEM</div>
+  <div class="sheet-body">
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">DESTINO *</div>
+        <input class="f-input" id="t-city" placeholder="Paris, França">
+      </div>
+      <div class="f-group">
+        <div class="f-label">HOTEL</div>
+        <input class="f-input" id="t-hotel" placeholder="Hotel...">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">ENTRADA</div>
+        <input class="f-input" type="date" id="t-checkin">
+      </div>
+      <div class="f-group">
+        <div class="f-label">SAÍDA</div>
+        <input class="f-input" type="date" id="t-checkout">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <div class="f-label">PREÇO (R$)</div>
+        <input class="f-input" type="number" id="t-price" placeholder="0,00">
+      </div>
+      <div class="f-group">
+        <div class="f-label">STATUS</div>
+        <select class="f-select" id="t-status">
+          <option value="cotação">Cotação</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="pago">Pago</option>
+          <option value="concluído">Concluído</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-group">
+      <div class="f-label">NOTAS</div>
+      <textarea class="f-textarea" id="t-notes" placeholder="Voo, traslado..."></textarea>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="action-btn btn-ghost" onclick="closeTripSheet()">Cancelar</button>
+    <button class="action-btn btn-primary" onclick="saveTrip()">Salvar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════
+let db = { leads: [] };
+let currentFilter = '';
+let currentLeadId = null;
+let currentDetailTab = 'info';
+let editingLeadId = null;
+let tripLeadId = null;
+let screenStack = ['screen-home'];
+
+// ── IndexedDB storage (persists on iOS PWA / Safari) ──
+const IDB_NAME = 'atlas_db';
+const IDB_STORE = 'data';
+let idb = null;
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = e => { idb = e.target.result; resolve(idb); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveDB() {
+  if (!idb) return;
+  const tx = idb.transaction(IDB_STORE, 'readwrite');
+  tx.objectStore(IDB_STORE).put(JSON.stringify(db), 'atlas_v2');
+}
+
+function loadDB() {
+  return new Promise(resolve => {
+    if (!idb) { resolve(); return; }
+    const tx = idb.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get('atlas_v2');
+    req.onsuccess = () => {
+      try { if (req.result) db = JSON.parse(req.result); } catch(e) {}
+      resolve();
+    };
+    req.onerror = () => resolve();
+  });
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function fmtDT(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`;
+}
+function fmtMoney(v) {
+  if (!v) return '—';
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+function initials(name) {
+  return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function getDocIcon(type) {
+  if (!type) return '📎';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type === 'application/pdf') return '📄';
+  if (type.startsWith('text/')) return '📝';
+  return '📎';
+}
+function pendingTasks() {
+  return db.leads.reduce((a,l)=>a+(l.tasks||[]).filter(t=>!t.done).length, 0);
+}
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function goTo(screenId) {
+  const prev = screenStack[screenStack.length-1];
+  document.getElementById(prev).classList.remove('active');
+  document.getElementById(prev).classList.add('behind');
+  document.getElementById(screenId).classList.add('active');
+  screenStack.push(screenId);
+  // render content
+  if (screenId === 'screen-tasks') renderGlobalTasks();
+  if (screenId === 'screen-trips-all') renderGlobalTrips();
+}
+
+function goBack() {
+  if (screenStack.length <= 1) return;
+  const cur = screenStack.pop();
+  const prev = screenStack[screenStack.length-1];
+  document.getElementById(cur).classList.remove('active');
+  document.getElementById(prev).classList.remove('behind');
+  document.getElementById(prev).classList.add('active');
+}
+
+function openDetail(id) {
+  currentLeadId = id;
+  currentDetailTab = 'info';
+  renderDetailScreen();
+  goTo('screen-detail');
+}
+
+// ══════════════════════════════════════
+//  FILTER
+// ══════════════════════════════════════
+function setFilter(el, f) {
+  currentFilter = f;
+  document.querySelectorAll('#chips-bar .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHome();
+}
+
+// ══════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════
+function renderHome() {
+  const search = (document.getElementById('search-input').value||'').toLowerCase();
+  let list = db.leads.filter(l => {
+    const mf = !currentFilter || l.status === currentFilter;
+    const ms = !search || l.name.toLowerCase().includes(search)
+      || (l.phone||'').includes(search)
+      || (l.email||'').toLowerCase().includes(search);
+    return mf && ms;
+  });
+
+  // stats
+  document.getElementById('s-total').textContent = db.leads.length;
+  document.getElementById('s-leads').textContent = db.leads.filter(l=>l.status==='lead').length;
+  document.getElementById('s-clients').textContent = db.leads.filter(l=>l.status==='cliente').length;
+  const pt = pendingTasks();
+  document.getElementById('s-tasks').textContent = pt;
+  const dot = document.getElementById('task-dot');
+  if (dot) dot.style.display = pt > 0 ? 'block' : 'none';
+
+  document.getElementById('list-count-label').textContent = `— ${list.length} CONTATO${list.length!==1?'S':''}`;
+
+  const container = document.getElementById('leads-list');
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><div>Nenhum contato encontrado</div></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(l => {
+    const tasks = (l.tasks||[]).filter(t=>!t.done).length;
+    const trips = (l.trips||[]).length;
+    const avatarHtml = l.photo
+      ? `<img src="${l.photo}">`
+      : initials(l.name);
+    const statusMap = {novo:'pill-novo',lead:'pill-lead',cliente:'pill-cliente',inativo:'pill-inativo'};
+    return `
+    <div class="lead-row" onclick="openDetail('${l.id}')">
+      <div class="avatar">${avatarHtml}</div>
+      <div class="lead-info">
+        <div class="lead-name">${l.name}</div>
+        <div class="lead-sub">${l.phone||l.email||l.channel||'—'}</div>
+        <div class="lead-badges">
+          <span class="pill ${statusMap[l.status]||'pill-novo'}">${(l.status||'novo').toUpperCase()}</span>
+          ${l.channel ? `<span class="pill" style="background:rgba(107,122,148,0.1);color:var(--text2)">${l.channel}</span>` : ''}
+          ${trips > 0 ? `<span class="pill" style="background:var(--gold-bg);color:var(--gold2)">✦${trips}</span>` : ''}
         </div>
+      </div>
+      <div class="lead-right">
+        <div class="lead-date">${l.firstContact ? fmtDT(l.firstContact).split(' ')[0] : ''}</div>
+        ${tasks > 0 ? `<div class="task-indicator">◻ ${tasks}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  DETAIL SCREEN
+// ══════════════════════════════════════
+function renderDetailScreen() {
+  const l = db.leads.find(x=>x.id===currentLeadId);
+  if (!l) return;
+
+  document.getElementById('detail-topbar-title').textContent = l.name;
+  document.getElementById('detail-name').textContent = l.name;
+  document.getElementById('detail-location').textContent =
+    [l.city, l.country].filter(Boolean).join(' · ') || '—';
+
+  const av = document.getElementById('detail-avatar');
+  av.innerHTML = l.photo ? `<img src="${l.photo}">` : initials(l.name);
+
+  // reset tabs
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[['info','tasks','trips','docs'].indexOf(currentDetailTab)]?.classList.add('active');
+
+  renderDetailTab();
+}
+
+function switchDetailTab(tab, el) {
+  currentDetailTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderDetailTab();
+  document.getElementById('detail-body').scrollTop = 0;
+}
+
+function renderDetailTab() {
+  const l = db.leads.find(x=>x.id===currentLeadId);
+  if (!l) return;
+  const body = document.getElementById('detail-body');
+  if (currentDetailTab === 'info') body.innerHTML = renderInfoTab(l);
+  else if (currentDetailTab === 'tasks') body.innerHTML = renderTasksTab(l);
+  else if (currentDetailTab === 'trips') body.innerHTML = renderTripsTab(l);
+  else if (currentDetailTab === 'docs') body.innerHTML = renderDocsTab(l);
+}
+
+function renderInfoTab(l) {
+  const statusMap = {novo:'sp-novo',lead:'sp-lead',cliente:'sp-cliente',inativo:'sp-inativo'};
+  return `
+  <div class="info-section">
+    <div class="timestamp-card">
+      <div class="ts-label">PRIMEIRO CONTATO</div>
+      <div class="ts-val">${fmtDT(l.firstContact)}</div>
     </div>
 
-    <div id="sheet-trip" class="bottom-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-content">
-            <h3 class="text-[10px] uppercase font-bold gold-text mb-4">+ NOVA VIAGEM</h3>
-            <form id="form-trip" class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Destino *</label>
-                        <input type="text" id="t-dest" placeholder="Ex: Rússia" class="w-full p-3 rounded-lg mt-1" required>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Hotel</label>
-                        <input type="text" id="t-hotel" placeholder="Nome do hotel" class="w-full p-3 rounded-lg mt-1">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Entrada</label>
-                        <input type="date" id="t-in" class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Saída</label>
-                        <input type="date" id="t-out" class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Preço Fechado</label>
-                        <input type="number" id="t-price" placeholder="0,00" class="w-full p-3 rounded-lg mt-1 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Status</label>
-                        <select id="t-status" class="w-full p-3 rounded-lg mt-1 text-sm">
-                            <option value="Cotação">Cotação</option>
-                            <option value="Confirmada">Confirmada</option>
-                            <option value="Finalizada">Finalizada</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase ml-1">Notas da Viagem</label>
-                    <textarea id="t-notes" placeholder="Voo, translado..." class="w-full p-3 rounded-lg mt-1 text-sm h-16"></textarea>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeAllModals()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm text-gray-300">Cancelar</button>
-                    <button type="submit" class="flex-1 gold-bg p-3 rounded-lg text-sm font-bold">Salvar Viagem</button>
-                </div>
-            </form>
+    <div class="info-card">
+      <div class="info-row">
+        <div class="info-icon">📱</div>
+        <div class="info-content">
+          <div class="info-label">CELULAR</div>
+          <div class="info-val mono">${l.phone||'—'}</div>
         </div>
+        ${l.phone ? `<a href="tel:${l.phone}" style="color:var(--green);font-size:20px;text-decoration:none">↗</a>` : ''}
+      </div>
+      <div class="info-row">
+        <div class="info-icon">✉️</div>
+        <div class="info-content">
+          <div class="info-label">EMAIL</div>
+          <div class="info-val mono">${l.email||'—'}</div>
+        </div>
+        ${l.email ? `<a href="mailto:${l.email}" style="color:var(--green);font-size:20px;text-decoration:none">↗</a>` : ''}
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📡</div>
+        <div class="info-content">
+          <div class="info-label">CANAL</div>
+          <div class="info-val">${l.channel||'—'}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📍</div>
+        <div class="info-content">
+          <div class="info-label">LOCALIZAÇÃO</div>
+          <div class="info-val">${[l.city,l.country].filter(Boolean).join(', ')||'—'}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◉</div>
+        <div class="info-content">
+          <div class="info-label">STATUS</div>
+          <div><span class="status-pill ${statusMap[l.status]||'sp-novo'}">${(l.status||'novo').toUpperCase()}</span></div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Configurações JSONBin
-        const JSONBIN_ID = '69f2a4cf856a6821898b51d0'; 
-        const JSONBIN_KEY = '$2a$10$dhzKzcr352sQVzbe1jCeFuFSu22MYZBByhqPlCdM0YjK1J6OSi7Vq'; 
-        const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
-        
-        let db = { contacts: [] };
-        let activeFilter = 'Todos';
-        let currentContactId = null;
+    ${l.notes ? `
+    <div class="notes-card">
+      <div class="info-label" style="margin-bottom:8px">OBSERVAÇÕES</div>
+      <div class="notes-text">${l.notes}</div>
+    </div>` : ''}
+  </div>
+  <div class="action-row" style="margin-top:8px">
+    <button class="action-btn btn-edit" onclick="openLeadSheet('${l.id}')">✎ Editar</button>
+    <button class="action-btn btn-delete" onclick="confirmDelete('${l.id}')">✕ Excluir</button>
+  </div>`;
+}
 
-        // Formatação de Data
-        function getNowStr() {
-            const now = new Date();
-            return `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        }
+function renderTasksTab(l) {
+  const tasks = l.tasks || [];
+  const done = tasks.filter(t=>t.done).length;
+  return `
+  <div class="tasks-section">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:14px">
+      ${tasks.length-done} ABERTA${tasks.length-done!==1?'S':''} · ${done} CONCLUÍDA${done!==1?'S':''}
+    </div>
+    ${tasks.map((t,i) => `
+      <div class="task-item">
+        <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask('${l.id}',${i})">
+        <div class="task-text ${t.done?'done':''}">${t.text}</div>
+        <button class="task-del" onclick="deleteTask('${l.id}',${i})">×</button>
+      </div>
+    `).join('')}
+    <div class="add-row">
+      <input class="add-input" id="new-task-input" placeholder="Nova tarefa para ${l.name.split(' ')[0]}..."
+        onkeydown="if(event.key==='Enter')addTask('${l.id}')">
+      <button class="add-btn" onclick="addTask('${l.id}')">+</button>
+    </div>
+  </div>`;
+}
 
-        // ====== NUVEM / SINCRONIZAÇÃO ======
-        async function loadData() {
-            try {
-                const response = await fetch(`${API_URL}/latest`, { headers: { 'X-Access-Key': JSONBIN_KEY } });
-                const result = await response.json();
-                db = result.record || { contacts: [] };
-                // Migração de segurança se o DB antigo tiver tarefas soltas fora dos contatos
-                if(!db.contacts) db.contacts = [];
-                renderDashboard();
-            } catch (error) {
-                document.getElementById('contacts-list').innerHTML = `<p class="text-center text-red-500 text-sm mt-10">Erro de conexão. Tente recarregar.</p>`;
-            }
-        }
+function renderTripsTab(l) {
+  const trips = l.trips || [];
+  const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
+  return `
+  <div class="trips-section">
+    <button class="action-btn btn-primary" style="width:100%;margin-bottom:14px" onclick="openTripSheet('${l.id}')">+ Nova Viagem</button>
+    ${!trips.length ? `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>` :
+    trips.map((t,i) => `
+      <div class="trip-card">
+        <div class="trip-top">
+          <div>
+            <div class="trip-city">✦ ${t.city}</div>
+            <div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+            <button class="task-del" onclick="deleteTrip('${l.id}',${i})">×</button>
+          </div>
+        </div>
+        <div class="trip-grid">
+          <div>
+            <div class="trip-field-label">HOTEL</div>
+            <div class="trip-field-val">${t.hotel||'—'}</div>
+          </div>
+          <div>
+            <div class="trip-field-label">PREÇO</div>
+            <div class="trip-field-val price">${fmtMoney(t.price)}</div>
+          </div>
+          ${t.notes ? `<div style="grid-column:1/-1">
+            <div class="trip-field-label">NOTAS</div>
+            <div class="trip-field-val">${t.notes}</div>
+          </div>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
 
-        async function saveData() {
-            const syncUI = document.getElementById('sync-status');
-            syncUI.style.display = 'block';
-            try {
-                await fetch(API_URL, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Access-Key': JSONBIN_KEY },
-                    body: JSON.stringify(db)
-                });
-            } catch (error) {
-                console.error("Erro ao salvar:", error);
-            } finally {
-                setTimeout(() => syncUI.style.display = 'none', 1000);
-            }
-        }
+function renderDocsTab(l) {
+  const docs = l.docs || [];
+  return `
+  <div class="docs-section">
+    ${docs.map((d,i) => `
+      <div class="doc-item" onclick="viewDoc('${l.id}',${i})">
+        <div class="doc-icon">${getDocIcon(d.type)}</div>
+        <div class="doc-info">
+          <div class="doc-name">${d.name}</div>
+          <div class="doc-size">${(d.size/1024).toFixed(0)} KB</div>
+        </div>
+        <button class="doc-del" onclick="event.stopPropagation();deleteDoc('${l.id}',${i})">×</button>
+      </div>
+    `).join('')}
+    <label class="upload-btn">
+      <input type="file" multiple onchange="handleDocs(event,'${l.id}')">
+      <div class="upload-icon">📎</div>
+      <div>Toque para enviar arquivos</div>
+      <div style="font-size:11px;color:var(--text2)">Fotos, PDFs, documentos...</div>
+    </label>
+  </div>`;
+}
 
-        // ====== INTERFACE PRINCIPAL (DASHBOARD) ======
-        function renderDashboard() {
-            const list = document.getElementById('contacts-list');
-            list.innerHTML = '';
-            
-            const search = document.getElementById('search-input').value.toLowerCase();
-            
-            // Cálculos Stats
-            let totalT = 0;
-            db.contacts.forEach(c => {
-                if(c.tasks) totalT += c.tasks.filter(t => !t.done).length;
-            });
+// ══════════════════════════════════════
+//  LEAD FORM
+// ══════════════════════════════════════
+function openLeadSheet(id) {
+  editingLeadId = id;
+  if (id) {
+    const l = db.leads.find(x=>x.id===id);
+    document.getElementById('sheet-lead-title').textContent = '✎ EDITAR';
+    document.getElementById('f-name').value = l.name;
+    document.getElementById('f-phone').value = l.phone||'';
+    document.getElementById('f-email').value = l.email||'';
+    document.getElementById('f-city').value = l.city||'';
+    document.getElementById('f-country').value = l.country||'';
+    document.getElementById('f-notes').value = l.notes||'';
+    document.getElementById('f-status').value = l.status||'novo';
+    document.getElementById('f-channel').value = l.channel||'WhatsApp';
+  } else {
+    document.getElementById('sheet-lead-title').textContent = '+ NOVO LEAD';
+    ['f-name','f-phone','f-email','f-city','f-country','f-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-status').value = 'novo';
+    document.getElementById('f-channel').value = 'WhatsApp';
+  }
+  document.getElementById('overlay-lead').classList.add('open');
+  document.getElementById('sheet-lead').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(), 350);
+}
+function closeLeadSheet() {
+  document.getElementById('overlay-lead').classList.remove('open');
+  document.getElementById('sheet-lead').classList.remove('open');
+}
+function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('⚠ Nome é obrigatório'); return; }
+  if (editingLeadId) {
+    const l = db.leads.find(x=>x.id===editingLeadId);
+    l.name=name; l.phone=document.getElementById('f-phone').value.trim();
+    l.email=document.getElementById('f-email').value.trim();
+    l.city=document.getElementById('f-city').value.trim();
+    l.country=document.getElementById('f-country').value.trim();
+    l.notes=document.getElementById('f-notes').value.trim();
+    l.status=document.getElementById('f-status').value;
+    l.channel=document.getElementById('f-channel').value;
+  } else {
+    db.leads.unshift({
+      id:genId(), name,
+      phone:document.getElementById('f-phone').value.trim(),
+      email:document.getElementById('f-email').value.trim(),
+      city:document.getElementById('f-city').value.trim(),
+      country:document.getElementById('f-country').value.trim(),
+      notes:document.getElementById('f-notes').value.trim(),
+      status:document.getElementById('f-status').value,
+      channel:document.getElementById('f-channel').value,
+      firstContact:new Date().toISOString(),
+      tasks:[], trips:[], docs:[], photo:null
+    });
+  }
+  saveDB(); closeLeadSheet(); renderHome();
+  if (editingLeadId && currentLeadId===editingLeadId) renderDetailScreen();
+  toast(editingLeadId ? '✓ Lead atualizado' : '✓ Lead criado');
+}
 
-            document.getElementById('stat-total').innerText = db.contacts.length;
-            document.getElementById('stat-clientes').innerText = db.contacts.filter(c => c.status === 'Cliente').length;
-            document.getElementById('stat-leads').innerText = db.contacts.filter(c => c.status === 'Lead').length;
-            document.getElementById('stat-tarefas').innerText = totalT;
+function confirmDelete(id) {
+  if (confirm('Excluir este contato permanentemente?')) {
+    db.leads = db.leads.filter(l=>l.id!==id);
+    saveDB(); goBack(); renderHome(); toast('✓ Excluído');
+  }
+}
 
-            // Filtragem
-            let filtered = db.contacts.filter(c => {
-                const matchBusca = c.name.toLowerCase().includes(search) || (c.phone && c.phone.includes(search));
-                const matchPill = activeFilter === 'Todos' || c.status === activeFilter;
-                return matchBusca && matchPill;
-            });
+// ══════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════
+function addTask(leadId) {
+  const inp = document.getElementById('new-task-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks = l.tasks||[];
+  l.tasks.push({text, done:false});
+  saveDB(); inp.value=''; renderDetailTab(); renderHome();
+}
+function toggleTask(leadId, idx) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks[idx].done = !l.tasks[idx].done;
+  saveDB(); renderDetailTab(); renderHome();
+}
+function deleteTask(leadId, idx) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.tasks.splice(idx,1);
+  saveDB(); renderDetailTab(); renderHome();
+}
 
-            document.getElementById('list-count').innerText = filtered.length;
+// ══════════════════════════════════════
+//  TRIPS
+// ══════════════════════════════════════
+function openTripSheet(leadId) {
+  tripLeadId = leadId;
+  ['t-city','t-hotel','t-checkin','t-checkout','t-price','t-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-status').value='cotação';
+  document.getElementById('overlay-trip').classList.add('open');
+  document.getElementById('sheet-trip').classList.add('open');
+}
+function closeTripSheet() {
+  document.getElementById('overlay-trip').classList.remove('open');
+  document.getElementById('sheet-trip').classList.remove('open');
+}
+function saveTrip() {
+  const city = document.getElementById('t-city').value.trim();
+  if (!city) { toast('⚠ Destino é obrigatório'); return; }
+  const l = db.leads.find(x=>x.id===tripLeadId);
+  l.trips = l.trips||[];
+  l.trips.push({
+    city, hotel:document.getElementById('t-hotel').value.trim(),
+    checkin:document.getElementById('t-checkin').value,
+    checkout:document.getElementById('t-checkout').value,
+    price:document.getElementById('t-price').value,
+    status:document.getElementById('t-status').value,
+    notes:document.getElementById('t-notes').value.trim()
+  });
+  saveDB(); closeTripSheet(); renderDetailTab(); renderHome();
+  toast('✓ Viagem adicionada');
+}
+function deleteTrip(leadId, idx) {
+  if (!confirm('Remover esta viagem?')) return;
+  db.leads.find(x=>x.id===leadId).trips.splice(idx,1);
+  saveDB(); renderDetailTab();
+}
 
-            if (filtered.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-gray-600"><div class="w-10 h-10 border border-[#30363d] rotate-45 mx-auto mb-4"></div><p class="text-xs">Nenhum contato encontrado</p></div>`;
-                return;
-            }
+// ══════════════════════════════════════
+//  DOCS
+// ══════════════════════════════════════
+function handleDocs(event, leadId) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.docs = l.docs||[];
+  const files = Array.from(event.target.files);
+  let done = 0;
+  files.forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      l.docs.push({name:file.name, type:file.type, size:file.size, data:e.target.result});
+      if (++done===files.length) { saveDB(); renderDetailTab(); toast(`✓ ${files.length} arquivo(s) enviado(s)`); }
+    };
+    r.readAsDataURL(file);
+  });
+}
+function deleteDoc(leadId, idx) {
+  db.leads.find(x=>x.id===leadId).docs.splice(idx,1);
+  saveDB(); renderDetailTab();
+}
+function viewDoc(leadId, idx) {
+  const d = db.leads.find(x=>x.id===leadId).docs[idx];
+  const w = window.open();
+  w.document.write(`<title>${d.name}</title><body style="margin:0;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center">`);
+  if (d.type.startsWith('image/')) w.document.write(`<img src="${d.data}" style="max-width:100%;max-height:100vh">`);
+  else w.document.write(`<embed src="${d.data}" width="100%" height="100%" style="min-height:100vh">`);
+  w.document.write('</body>');
+}
 
-            filtered.slice().reverse().forEach(c => {
-                let badgeClass = `status-${c.status.toLowerCase()}`;
-                const div = document.createElement('div');
-                div.className = 'card p-3 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer';
-                div.onclick = () => openContactView(c.id);
-                div.innerHTML = `
-                    <div class="avatar flex-shrink-0">${c.name.charAt(0).toUpperCase()}</div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-sm text-gray-200 truncate">${c.name}</h4>
-                        <p class="text-xs text-gray-500 truncate">${c.channel} ${c.phone ? '• '+c.phone : ''}</p>
-                        <div class="mt-2 flex gap-2 items-center">
-                            <span class="status-badge ${badgeClass}">${c.status}</span>
-                            ${c.tasks && c.tasks.filter(t=>!t.done).length > 0 ? `<span class="text-[9px] text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded"><i class="fa fa-bell"></i> ${c.tasks.filter(t=>!t.done).length}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="text-[10px] text-gray-600 self-start mt-1">${c.dateAdded.split(' ')[0]}</div>
-                `;
-                list.appendChild(div);
-            });
-        }
+// ══════════════════════════════════════
+//  PHOTO
+// ══════════════════════════════════════
+function triggerPhotoUpload() { document.getElementById('photo-file-input').click(); }
+function handlePhotoUpload(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    db.leads.find(x=>x.id===currentLeadId).photo = e.target.result;
+    saveDB(); renderDetailScreen(); renderHome();
+    toast('✓ Foto atualizada');
+  };
+  r.readAsDataURL(file);
+}
 
-        function setFilter(filter) {
-            activeFilter = filter;
-            document.querySelectorAll('.pill-filter').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText === filter);
-            });
-            renderDashboard();
-        }
-        function filterList() { renderDashboard(); }
+// ══════════════════════════════════════
+//  GLOBAL SCREENS
+// ══════════════════════════════════════
+function renderGlobalTasks() {
+  const container = document.getElementById('global-tasks-body');
+  let html = '';
+  db.leads.forEach(l => {
+    const pending = (l.tasks||[]).filter(t=>!t.done);
+    if (!pending.length) return;
+    html += `<div style="margin-bottom:20px">
+      <div class="global-lead-header" onclick="openDetail('${l.id}');goTo('screen-detail')">
+        <div class="global-lead-name">${l.name}</div>
+        <div class="global-lead-count">${pending.length} pendente${pending.length!==1?'s':''} →</div>
+      </div>`;
+    pending.forEach(t => {
+      const realIdx = l.tasks.indexOf(t);
+      html += `<div class="task-item">
+        <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
+        <div class="task-text">${t.text}</div>
+        <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = `<div class="empty-state"><div class="empty-icon">◻</div><div>Nenhuma tarefa pendente 🎉</div></div>`;
+  container.innerHTML = html;
+}
 
-        // ====== ÁREA DE TRABALHO DO CLIENTE ======
-        function openContactView(id) {
-            currentContactId = id;
-            const c = db.contacts.find(x => x.id === id);
-            if(!c) return;
+function renderGlobalTrips() {
+  const container = document.getElementById('global-trips-body');
+  let html = '';
+  const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
+  db.leads.forEach(l => {
+    if (!(l.trips||[]).length) return;
+    html += `<div style="margin-bottom:20px">
+      <div class="trip-lead-name">${l.name.toUpperCase()}</div>`;
+    l.trips.forEach(t => {
+      html += `<div class="trip-card">
+        <div class="trip-top">
+          <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
+          <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+        </div>
+        <div class="trip-grid">
+          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>`;
+  container.innerHTML = html;
+}
 
-            // Garantir arrays
-            if(!c.tasks) c.tasks = [];
-            if(!c.trips) c.trips = [];
-            if(!c.docs) c.docs = [];
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
 
-            // Popular Header
-            document.getElementById('cv-header-name').innerText = c.name;
-            document.getElementById('cv-name').innerText = c.name;
-            document.getElementById('cv-avatar').innerText = c.name.charAt(0).toUpperCase();
-            
-            // Popular Info Tab
-            document.getElementById('cv-date').innerText = c.dateAdded;
-            document.getElementById('cv-phone').innerText = c.phone || '—';
-            document.getElementById('cv-email').innerText = c.email || '—';
-            document.getElementById('cv-channel').innerText = c.channel || '—';
-            document.getElementById('cv-location').innerText = [c.city, c.country].filter(Boolean).join(', ') || '—';
-            document.getElementById('cv-notes').innerText = c.notes || '—';
-            
-            const badge = document.getElementById('cv-status');
-            badge.innerText = c.status;
-            badge.className = `status-badge status-${c.status.toLowerCase()}`;
-
-            // Trocar Telas
-            document.getElementById('view-dashboard').classList.add('hidden-view');
-            document.getElementById('view-contact').classList.remove('hidden-view');
-            
-            // Resetar scroll e ir para a aba Info
-            window.scrollTo(0,0);
-            switchContactTab('info');
-        }
-
-        function closeContactView() {
-            currentContactId = null;
-            document.getElementById('view-contact').classList.add('hidden-view');
-            document.getElementById('view-dashboard').classList.remove('hidden-view');
-            renderDashboard();
-        }
-
-        function switchContactTab(tabName) {
-            ['info', 'tarefas', 'viagens', 'docs'].forEach(t => {
-                document.getElementById('tab-btn-' + t).classList.remove('active');
-                document.getElementById('tab-content-' + t).classList.add('hidden-view');
-            });
-            document.getElementById('tab-btn-' + tabName).classList.add('active');
-            document.getElementById('tab-content-' + tabName).classList.remove('hidden-view');
-
-            if(tabName === 'tarefas') renderTasks();
-            if(tabName === 'viagens') renderTrips();
-            if(tabName === 'docs') renderDocs();
-        }
-
-        // --- SUB-FUNÇÕES DA ÁREA DE TRABALHO ---
-
-        // Tarefas
-        function renderTasks() {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            const list = document.getElementById('cv-tasks-list');
-            list.innerHTML = '';
-            
-            let open = 0, done = 0;
-            c.tasks.forEach(t => t.done ? done++ : open++);
-            document.getElementById('cv-tasks-open').innerText = open;
-            document.getElementById('cv-tasks-done').innerText = done;
-
-            c.tasks.slice().reverse().forEach(task => {
-                const div = document.createElement('div');
-                div.className = `card p-3 flex justify-between items-center bg-[#1c212a] ${task.done ? 'opacity-50' : ''}`;
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${task.id})" class="w-5 h-5 rounded bg-[#0d1117] border-[#30363d] accent-[#ffb800] flex-shrink-0">
-                        <span class="text-sm truncate ${task.done ? 'line-through text-gray-500' : 'text-gray-200'}">${task.desc}</span>
-                    </div>
-                    <button onclick="deleteTask(${task.id})" class="text-red-900 ml-2 p-2"><i class="fa fa-times"></i></button>
-                `;
-                list.appendChild(div);
-            });
-        }
-        function addTask() {
-            const input = document.getElementById('new-task-input');
-            if(!input.value.trim()) return;
-            const c = db.contacts.find(x => x.id === currentContactId);
-            c.tasks.push({ id: Date.now(), desc: input.value, done: false });
-            input.value = '';
-            renderTasks();
-            saveData();
-        }
-        function toggleTask(id) {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            const t = c.tasks.find(x => x.id === id);
-            if(t) t.done = !t.done;
-            renderTasks();
-            saveData();
-        }
-        function deleteTask(id) {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            c.tasks = c.tasks.filter(x => x.id !== id);
-            renderTasks();
-            saveData();
-        }
-
-        // Viagens
-        function renderTrips() {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            const list = document.getElementById('cv-trips-list');
-            list.innerHTML = '';
-            
-            if(c.trips.length === 0) list.innerHTML = `<p class="text-center text-xs text-gray-600 mt-6">Nenhuma viagem registrada.</p>`;
-
-            c.trips.forEach(trip => {
-                const div = document.createElement('div');
-                div.className = 'card p-4 bg-[#161b22]';
-                div.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-sm text-gray-200"><i class="fa fa-plane text-gray-500 text-xs mr-1"></i> ${trip.dest}</h4>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] uppercase px-2 py-0.5 rounded bg-[#30363d] text-gray-400">${trip.status}</span>
-                            <button onclick="deleteTrip(${trip.id})" class="text-gray-600"><i class="fa fa-times"></i></button>
-                        </div>
-                    </div>
-                    <div class="flex justify-between mt-3">
-                        <div>
-                            <p class="text-[10px] text-gray-500 uppercase">Período</p>
-                            <p class="text-xs gold-text">${formatDateBr(trip.in)} <i class="fa fa-arrow-right text-[8px] text-gray-600 mx-1"></i> ${formatDateBr(trip.out)}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] text-gray-500 uppercase">Preço</p>
-                            <p class="text-xs text-gray-300">R$ ${trip.price || '---'}</p>
-                        </div>
-                    </div>
-                    ${trip.hotel ? `<p class="text-xs text-gray-400 mt-3 border-t border-[#30363d] pt-2"><i class="fa fa-bed w-4 text-center"></i> ${trip.hotel}</p>` : ''}
-                `;
-                list.appendChild(div);
-            });
-        }
-        function deleteTrip(id) {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            c.trips = c.trips.filter(x => x.id !== id);
-            renderTrips();
-            saveData();
-        }
-        function formatDateBr(isoDate) {
-            if(!isoDate) return '--/--/----';
-            const [y,m,d] = isoDate.split('-');
-            return `${d}/${m}/${y}`;
-        }
-
-        // Documentos
-        function renderDocs() {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            const list = document.getElementById('cv-docs-list');
-            list.innerHTML = '';
-            
-            if(c.docs.length === 0) list.innerHTML = `<p class="text-center text-xs text-gray-600 mt-4">Nenhum arquivo salvo.</p>`;
-
-            c.docs.forEach(doc => {
-                const div = document.createElement('div');
-                div.className = 'card p-3 bg-[#1c212a] flex justify-between items-center';
-                div.innerHTML = `
-                    <div class="flex-1 min-w-0">
-                        <a href="${doc.url}" target="_blank" class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0"><i class="fab fa-google-drive"></i></div>
-                            <span class="text-sm text-blue-400 underline truncate">${doc.name}</span>
-                        </a>
-                    </div>
-                    <button onclick="deleteDoc(${doc.id})" class="text-red-900 p-2 shrink-0"><i class="fa fa-trash text-xs"></i></button>
-                `;
-                list.appendChild(div);
-            });
-        }
-        function addDoc() {
-            const name = document.getElementById('new-doc-name').value;
-            const url = document.getElementById('new-doc-url').value;
-            if(!name || !url) return alert("Preencha o nome e o link do Drive.");
-            
-            const c = db.contacts.find(x => x.id === currentContactId);
-            c.docs.push({ id: Date.now(), name, url });
-            document.getElementById('new-doc-name').value = '';
-            document.getElementById('new-doc-url').value = '';
-            renderDocs();
-            saveData();
-        }
-        function deleteDoc(id) {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            c.docs = c.docs.filter(x => x.id !== id);
-            renderDocs();
-            saveData();
-        }
-
-        // Edição e Exclusão de Contato
-        function deleteCurrentContact() {
-            if(confirm("Excluir este contato permanentemente? Isso apagará tarefas, viagens e documentos salvos dele.")) {
-                db.contacts = db.contacts.filter(x => x.id !== currentContactId);
-                saveData();
-                closeContactView();
-            }
-        }
-        function editCurrentContact() {
-            const c = db.contacts.find(x => x.id === currentContactId);
-            document.getElementById('f-id').value = c.id;
-            document.getElementById('f-name').value = c.name;
-            document.getElementById('f-status').value = c.status;
-            document.getElementById('f-phone').value = c.phone || '';
-            document.getElementById('f-email').value = c.email || '';
-            document.getElementById('f-city').value = c.city || '';
-            document.getElementById('f-country').value = c.country || '';
-            document.getElementById('f-channel').value = c.channel || 'WhatsApp';
-            document.getElementById('f-notes').value = c.notes || '';
-            
-            document.getElementById('modal-lead-title').innerText = 'EDITAR CONTATO';
-            openModal('sheet-lead');
-        }
-
-        // ====== MODAIS (BOTTOM SHEETS) ======
-        function openModal(id) {
-            if(id === 'sheet-lead' && !document.getElementById('f-id').value) {
-                document.getElementById('form-lead').reset();
-                document.getElementById('modal-lead-title').innerText = '+ NOVO LEAD';
-            }
-            if(id === 'sheet-trip') document.getElementById('form-trip').reset();
-
-            document.getElementById('overlay').classList.add('active');
-            document.getElementById(id).classList.add('open');
-        }
-
-        function closeAllModals() {
-            document.getElementById('overlay').classList.remove('active');
-            document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('open'));
-            document.getElementById('f-id').value = ''; // reseta id oculto
-        }
-
-        // Formulário de Lead
-        document.getElementById('form-lead').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const idToEdit = document.getElementById('f-id').value;
-            
-            const contactData = {
-                name: document.getElementById('f-name').value,
-                status: document.getElementById('f-status').value,
-                phone: document.getElementById('f-phone').value,
-                email: document.getElementById('f-email').value,
-                city: document.getElementById('f-city').value,
-                country: document.getElementById('f-country').value,
-                channel: document.getElementById('f-channel').value,
-                notes: document.getElementById('f-notes').value,
-            };
-
-            if (idToEdit) {
-                // Editando
-                let c = db.contacts.find(x => x.id == idToEdit);
-                Object.assign(c, contactData);
-                openContactView(c.id); // Atualiza a tela de dentro
-            } else {
-                // Criando novo
-                contactData.id = Date.now();
-                contactData.dateAdded = getNowStr();
-                contactData.tasks = [];
-                contactData.trips = [];
-                contactData.docs = [];
-                db.contacts.push(contactData);
-                renderDashboard();
-            }
-
-            saveData();
-            closeAllModals();
-        });
-
-        // Formulário de Viagem
-        document.getElementById('form-trip').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const c = db.contacts.find(x => x.id === currentContactId);
-            
-            const newTrip = {
-                id: Date.now(),
-                dest: document.getElementById('t-dest').value,
-                hotel: document.getElementById('t-hotel').value,
-                in: document.getElementById('t-in').value,
-                out: document.getElementById('t-out').value,
-                price: document.getElementById('t-price').value,
-                status: document.getElementById('t-status').value,
-                notes: document.getElementById('t-notes').value
-            };
-            
-            c.trips.push(newTrip);
-            saveData();
-            renderTrips();
-            closeAllModals();
-        });
-
-        // INICIALIZAÇÃO
-        loadData();
-
-    </script>
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+openIDB().then(() => loadDB()).then(() => renderHome());
+</script>
 </body>
 </html>
