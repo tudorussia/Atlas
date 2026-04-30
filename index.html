@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>TudoRussia</title>
+<title>ATLAS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -146,6 +149,19 @@ body {
   border-radius: 50%;
   border: 2px solid var(--s1);
 }
+
+/* ── LOGO SCREEN ── */
+.home-logo {
+  padding: 28px 20px 16px;
+}
+.logo-mark {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 4px;
+}
+.logo-sub { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
 
 /* ── STATS ROW ── */
 .stats-row {
@@ -337,14 +353,13 @@ body {
 }
 .notes-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
 
-.action-row { display: flex; gap: 10px; padding: 0 16px 16px; flex-wrap: wrap; }
+.action-row { display: flex; gap: 10px; padding: 0 16px 16px; }
 .action-btn {
   flex: 1; padding: 13px;
   border-radius: var(--radius-sm);
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
   cursor: pointer; border: none; transition: all 0.15s;
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  min-width: calc(33% - 10px);
 }
 .action-btn:active { transform: scale(0.97); }
 .btn-edit { background: var(--s2); color: var(--text); border: 1px solid var(--border2); }
@@ -421,26 +436,36 @@ body {
 .doc-icon { font-size: 22px; flex-shrink: 0; }
 .doc-info { flex: 1; min-width: 0; }
 .doc-name { font-size: 13px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.doc-size { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.doc-size { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 2px; }
 .doc-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; }
 .doc-del:active { color: var(--red); }
+
+.upload-btn {
+  width: 100%;
+  background: var(--s2); border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 22px; text-align: center;
+  cursor: pointer; color: var(--text2);
+  font-size: 13px; transition: all 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.upload-btn:active { border-color: var(--gold); color: var(--gold); }
+.upload-btn input { display: none; }
+.upload-icon { font-size: 26px; }
 
 /* ── GLOBAL TASKS ── */
 .global-section { padding: 16px; }
 .global-lead-header {
   display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px; cursor: pointer;
-  background: var(--s2); border-radius: var(--radius-sm);
-  margin-bottom: 8px; border: 1px solid var(--border);
-  transition: border-color 0.2s;
+  padding: 10px 0 8px; cursor: pointer;
 }
-.global-lead-header:hover { border-color: var(--gold2); }
-.global-lead-name { font-family: var(--sans); font-weight: 500; font-size: 14px; color: var(--white); flex: 1; }
-.global-lead-count { font-family: var(--mono); font-size: 11px; color: var(--gold); }
+.global-lead-name { font-family: var(--mono); font-size: 12px; color: var(--gold); flex: 1; }
+.global-lead-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
 
 /* ── GLOBAL TRIPS ── */
 .trip-lead-name {
-  font-family: var(--sans); font-weight: 500; font-size: 14px; color: var(--white); flex: 1;
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  letter-spacing: 1px; margin-bottom: 8px;
 }
 
 /* ── MODAL SHEET ── */
@@ -527,18 +552,14 @@ body {
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-/* ── DESKTOP LAYOUT (NOVO) ── */
+/* ── DESKTOP LAYOUT ── */
 @media (min-width: 768px) {
   body { display: flex; justify-content: center; background: #08090c; }
   #app-root {
-    width: 100%;
-    max-width: 800px;
+    width: 420px;
     position: relative;
     box-shadow: 0 0 60px rgba(0,0,0,0.8);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
   }
-  .stats-row { grid-template-columns: repeat(4, 1fr); }
   .screen { position: absolute; }
   .bottom-nav { position: absolute; left: 0; right: 0; }
   .fab { position: absolute; }
@@ -547,26 +568,15 @@ body {
   .toast { position: absolute; }
 }
 </style>
-
 </head>
 <body>
-
-<script>
-  // Trava de segurança simples para evitar acessos acidentais via link direto
-  const userPass = prompt("🛡️ Segurança: Digite a senha de acesso ao Painel (Padrão: tudorussia):");
-  if (userPass !== "tudorussia") {
-    document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:50px;font-family:sans-serif'>Acesso Bloqueado</h2>";
-    throw new Error("Acesso negado.");
-  }
-</script>
-
 <div id="app-root">
 
 <div class="screen active" id="screen-home">
   <div class="topbar">
     <div>
-      <div class="topbar-title" style="color:var(--gold);font-size:18px;letter-spacing:3px">TUDORUSSIA</div>
-      <div class="topbar-sub">PAINEL DE CONTROLE</div>
+      <div class="topbar-title" style="color:var(--gold);font-size:18px;letter-spacing:3px">ATLAS</div>
+      <div class="topbar-sub">PAINEL DE LEADS</div>
     </div>
   </div>
 
@@ -613,7 +623,6 @@ body {
 
     <div class="section-label" id="list-count-label">— CONTATOS</div>
     <div class="leads-list" id="leads-list"></div>
-
   </div>
 
   <button class="fab" onclick="openLeadSheet(null)">+</button>
@@ -807,18 +816,15 @@ let currentLeadId = null;
 let currentDetailTab = 'info';
 let editingLeadId = null;
 let tripLeadId = null;
-let editingTripIndex = null; 
+let editingTripIndex = null; // Variável nova para controlar se estamos editando
 let screenStack = ['screen-home'];
-
-// Controle de pastas sanfonadas (minimizar abas globais)
-let expandedTasks = {};
-let expandedTrips = {};
 
 const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Salva os dados na nuvem (Supabase)
 async function saveDB() {
   const { error } = await supabaseClient
     .from('atlas_data')
@@ -830,6 +836,7 @@ async function saveDB() {
   }
 }
 
+// Carrega os dados da nuvem (Supabase)
 async function loadDB() {
   const { data, error } = await supabaseClient
     .from('atlas_data')
@@ -837,7 +844,11 @@ async function loadDB() {
     .eq('id', 'atlas_v2')
     .single();
 
-  if (error) return;
+  if (error) {
+    console.error("Erro ao carregar dados:", error);
+    return;
+  }
+
   if (data && data.data) {
     db = data.data;
   }
@@ -860,6 +871,13 @@ function fmtMoney(v) {
 }
 function initials(name) {
   return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function getDocIcon(type) {
+  if (!type) return '📎';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type === 'application/pdf') return '📄';
+  if (type.startsWith('text/')) return '📝';
+  return '📎';
 }
 function pendingTasks() {
   return db.leads.reduce((a,l)=>a+(l.tasks||[]).filter(t=>!t.done).length, 0);
@@ -895,65 +913,7 @@ function openDetail(id) {
 }
 
 // ══════════════════════════════════════
-//  GERADOR DE PDF (NOVO)
-// ══════════════════════════════════════
-function exportPDF(leadId) {
-  const l = db.leads.find(x=>x.id===leadId);
-  const w = window.open('', '_blank');
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Ficha - ${l.name}</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-        h1 { color: #c8881a; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 5px; }
-        .section { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; }
-        .item { margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-        strong { color: #555; }
-      </style>
-    </head>
-    <body>
-      <h1>TudoRússia - Controle Interno</h1>
-      <h2>${l.name}</h2>
-      <p><strong>Status:</strong> ${l.status.toUpperCase()}</p>
-      <p><strong>Telefone:</strong> ${l.phone || 'N/A'}</p>
-      <p><strong>Email:</strong> ${l.email || 'N/A'}</p>
-      <p><strong>Canal:</strong> ${l.channel || 'N/A'}</p>
-      <p><strong>Localização:</strong> ${[l.city, l.country].filter(Boolean).join(', ') || 'N/A'}</p>
-      <p><strong>Observações:</strong> ${l.notes || 'Nenhuma'}</p>
-
-      ${l.trips && l.trips.length > 0 ? `
-        <div class="section">
-          <h3>Viagens</h3>
-          ${l.trips.map(t => `
-            <div class="item">
-              <p><strong>Destino:</strong> ${t.city}</p>
-              <p><strong>Período:</strong> ${fmtDate(t.checkin)} a ${fmtDate(t.checkout)}</p>
-              <p><strong>Status:</strong> ${t.status.toUpperCase()}</p>
-              <p><strong>Hotel:</strong> ${t.hotel || 'N/A'}</p>
-              <p><strong>Preço:</strong> ${fmtMoney(t.price)}</p>
-              <p><strong>Notas:</strong> ${t.notes || 'N/A'}</p>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      <div style="margin-top: 50px; font-size: 12px; color: #888; text-align: center;">
-        Gerado pelo Painel TudoRússia em ${new Date().toLocaleDateString('pt-BR')}
-      </div>
-      <script>
-        window.onload = function() { window.print(); }
-      </script>
-    </body>
-    </html>
-  `;
-  w.document.write(html);
-  w.document.close();
-}
-
-// ══════════════════════════════════════
-//  FILTER & SEARCH (CORRIGIDO)
+//  FILTER
 // ══════════════════════════════════════
 function setFilter(el, f) {
   currentFilter = f;
@@ -962,23 +922,16 @@ function setFilter(el, f) {
   renderHome();
 }
 
+// ══════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════
 function renderHome() {
-  const searchInput = document.getElementById('search-input').value || '';
-  const searchLower = searchInput.toLowerCase().trim();
-  const searchNumbers = searchInput.replace(/\D/g, ''); // Para busca de telefone exata
-
+  const search = (document.getElementById('search-input').value||'').toLowerCase();
   let list = db.leads.filter(l => {
     const mf = !currentFilter || l.status === currentFilter;
-    
-    const leadName = (l.name || '').toLowerCase();
-    const leadEmail = (l.email || '').toLowerCase();
-    const leadPhoneNumbers = (l.phone || '').replace(/\D/g, '');
-
-    const ms = !searchLower || 
-               leadName.includes(searchLower) || 
-               leadEmail.includes(searchLower) || 
-               (searchNumbers && leadPhoneNumbers.includes(searchNumbers));
-               
+    const ms = !search || l.name.toLowerCase().includes(search)
+      || (l.phone||'').includes(search)
+      || (l.email||'').toLowerCase().includes(search);
     return mf && ms;
   });
 
@@ -1115,7 +1068,6 @@ function renderInfoTab(l) {
     </div>` : ''}
   </div>
   <div class="action-row" style="margin-top:8px">
-    <button class="action-btn btn-ghost" onclick="exportPDF('${l.id}')">📄 PDF</button>
     <button class="action-btn btn-edit" onclick="openLeadSheet('${l.id}')">✎ Editar</button>
     <button class="action-btn btn-delete" onclick="confirmDelete('${l.id}')">✕ Excluir</button>
   </div>`;
@@ -1173,56 +1125,31 @@ function renderTripsTab(l) {
   </div>`;
 }
 
-// ══════════════════════════════════════
-//  DOCS (AGORA SÓ LINKS)
-// ══════════════════════════════════════
 function renderDocsTab(l) {
-  const links = l.docLinks || [];
+  const docs = l.docs || [];
   return `
   <div class="docs-section">
-    <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:14px">LINKS EXTERNOS (Ex: Google Drive, Notion)</div>
-    ${links.map((d,i) => `
-      <div class="doc-item" onclick="window.open('${d.url}', '_blank')">
-        <div class="doc-icon">🔗</div>
+    ${docs.map((d,i) => `
+      <div class="doc-item" onclick="viewDoc('${l.id}',${i})">
+        <div class="doc-icon">${getDocIcon(d.type)}</div>
         <div class="doc-info">
           <div class="doc-name">${d.name}</div>
-          <div class="doc-size">${d.url}</div>
+          <div class="doc-size">${(d.size/1024).toFixed(0)} KB</div>
         </div>
-        <button class="doc-del" onclick="event.stopPropagation();deleteDocLink('${l.id}',${i})">×</button>
+        <button class="doc-del" onclick="event.stopPropagation();deleteDoc('${l.id}',${i})">×</button>
       </div>
     `).join('')}
-    
-    <div style="margin-top: 18px; padding-top:14px; border-top:1px solid var(--border2);">
-      <div class="f-label">ADICIONAR NOVO LINK</div>
-      <input class="add-input" id="new-link-name" placeholder="Título (Ex: Pasta Google Drive)" style="margin-bottom:8px">
-      <input class="add-input" id="new-link-url" placeholder="URL (https://...)" style="margin-bottom:8px">
-      <button class="action-btn btn-primary" style="width:100%" onclick="addDocLink('${l.id}')">+ Salvar Link</button>
-    </div>
+    <label class="upload-btn">
+      <input type="file" multiple onchange="handleDocs(event,'${l.id}')">
+      <div class="upload-icon">📎</div>
+      <div>Toque para enviar arquivos</div>
+      <div style="font-size:11px;color:var(--text2)">Fotos, PDFs, documentos...</div>
+    </label>
   </div>`;
 }
 
-function addDocLink(leadId) {
-  const name = document.getElementById('new-link-name').value.trim();
-  let url = document.getElementById('new-link-url').value.trim();
-  if(!name || !url) { toast('⚠ Preencha título e link'); return; }
-  
-  if (!url.startsWith('http')) url = 'https://' + url;
-
-  const l = db.leads.find(x=>x.id===leadId);
-  l.docLinks = l.docLinks || [];
-  l.docLinks.push({name, url});
-  
-  saveDB(); renderDetailTab(); toast('✓ Link salvo');
-}
-
-function deleteDocLink(leadId, idx) {
-  if(!confirm("Remover este link?")) return;
-  db.leads.find(x=>x.id===leadId).docLinks.splice(idx,1);
-  saveDB(); renderDetailTab();
-}
-
 // ══════════════════════════════════════
-//  LEAD FORM E TAREFAS (Igual)
+//  LEAD FORM
 // ══════════════════════════════════════
 function openLeadSheet(id) {
   editingLeadId = id;
@@ -1274,7 +1201,7 @@ function saveLead() {
       status:document.getElementById('f-status').value,
       channel:document.getElementById('f-channel').value,
       firstContact:new Date().toISOString(),
-      tasks:[], trips:[], docLinks:[], photo:null
+      tasks:[], trips:[], docs:[], photo:null
     });
   }
   saveDB(); closeLeadSheet(); renderHome();
@@ -1289,6 +1216,9 @@ function confirmDelete(id) {
   }
 }
 
+// ══════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════
 function addTask(leadId) {
   const inp = document.getElementById('new-task-input');
   const text = inp.value.trim();
@@ -1310,15 +1240,16 @@ function deleteTask(leadId, idx) {
 }
 
 // ══════════════════════════════════════
-//  TRIPS
+//  TRIPS (EDITAR E CRIAR)
 // ══════════════════════════════════════
 function openTripSheet(leadId, tripIndex = null) {
   tripLeadId = leadId;
-  editingTripIndex = tripIndex; 
+  editingTripIndex = tripIndex; // Marca se estamos editando ou criando
   
   const titleEl = document.getElementById('sheet-trip-title');
 
   if (tripIndex !== null) {
+    // Modo Edição: Puxa os dados antigos para preencher os campos
     titleEl.textContent = '✎ EDITAR VIAGEM';
     const trip = db.leads.find(x=>x.id===leadId).trips[tripIndex];
     document.getElementById('t-city').value = trip.city || '';
@@ -1329,6 +1260,7 @@ function openTripSheet(leadId, tripIndex = null) {
     document.getElementById('t-status').value = trip.status || 'cotação';
     document.getElementById('t-notes').value = trip.notes || '';
   } else {
+    // Modo Nova Viagem: Limpa tudo
     titleEl.textContent = '✦ NOVA VIAGEM';
     ['t-city','t-hotel','t-checkin','t-checkout','t-price','t-notes'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('t-status').value='cotação';
@@ -1362,20 +1294,55 @@ function saveTrip() {
   };
 
   if (editingTripIndex !== null) {
+    // Atualiza a viagem existente
     l.trips[editingTripIndex] = tripData;
     toast('✓ Viagem atualizada');
   } else {
+    // Adiciona uma viagem nova
     l.trips.push(tripData);
     toast('✓ Viagem adicionada');
   }
 
-  saveDB(); closeTripSheet(); renderDetailTab(); renderHome();
+  saveDB(); 
+  closeTripSheet(); 
+  renderDetailTab(); 
+  renderHome();
 }
 
 function deleteTrip(leadId, idx) {
   if (!confirm('Remover esta viagem?')) return;
   db.leads.find(x=>x.id===leadId).trips.splice(idx,1);
   saveDB(); renderDetailTab();
+}
+
+// ══════════════════════════════════════
+//  DOCS
+// ══════════════════════════════════════
+function handleDocs(event, leadId) {
+  const l = db.leads.find(x=>x.id===leadId);
+  l.docs = l.docs||[];
+  const files = Array.from(event.target.files);
+  let done = 0;
+  files.forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      l.docs.push({name:file.name, type:file.type, size:file.size, data:e.target.result});
+      if (++done===files.length) { saveDB(); renderDetailTab(); toast(`✓ ${files.length} arquivo(s) enviado(s)`); }
+    };
+    r.readAsDataURL(file);
+  });
+}
+function deleteDoc(leadId, idx) {
+  db.leads.find(x=>x.id===leadId).docs.splice(idx,1);
+  saveDB(); renderDetailTab();
+}
+function viewDoc(leadId, idx) {
+  const d = db.leads.find(x=>x.id===leadId).docs[idx];
+  const w = window.open();
+  w.document.write(`<title>${d.name}</title><body style="margin:0;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center">`);
+  if (d.type.startsWith('image/')) w.document.write(`<img src="${d.data}" style="max-width:100%;max-height:100vh">`);
+  else w.document.write(`<embed src="${d.data}" width="100%" height="100%" style="min-height:100vh">`);
+  w.document.write('</body>');
 }
 
 // ══════════════════════════════════════
@@ -1394,79 +1361,53 @@ function handlePhotoUpload(event) {
 }
 
 // ══════════════════════════════════════
-//  GLOBAL SCREENS (COM PASTAS SANFONADAS)
+//  GLOBAL SCREENS
 // ══════════════════════════════════════
-function toggleGlobalTaskFolder(id) {
-  expandedTasks[id] = !expandedTasks[id];
-  renderGlobalTasks();
-}
-
 function renderGlobalTasks() {
   const container = document.getElementById('global-tasks-body');
   let html = '';
   db.leads.forEach(l => {
     const pending = (l.tasks||[]).filter(t=>!t.done);
     if (!pending.length) return;
-    
-    const isExp = expandedTasks[l.id];
-    
-    html += `<div style="margin-bottom:12px">
-      <div class="global-lead-header" onclick="toggleGlobalTaskFolder('${l.id}')">
+    html += `<div style="margin-bottom:20px">
+      <div class="global-lead-header" onclick="openDetail('${l.id}');goTo('screen-detail')">
         <div class="global-lead-name">${l.name}</div>
-        <div class="global-lead-count">${pending.length} pendente(s) ${isExp ? '▼' : '▶'}</div>
+        <div class="global-lead-count">${pending.length} pendente${pending.length!==1?'s':''} →</div>
       </div>`;
-      
-    if (isExp) {
-      pending.forEach(t => {
-        const realIdx = l.tasks.indexOf(t);
-        html += `<div class="task-item" style="margin-left: 12px; margin-right: 12px;">
-          <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
-          <div class="task-text">${t.text}</div>
-          <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
-        </div>`;
-      });
-    }
+    pending.forEach(t => {
+      const realIdx = l.tasks.indexOf(t);
+      html += `<div class="task-item">
+        <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
+        <div class="task-text">${t.text}</div>
+        <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
+      </div>`;
+    });
     html += '</div>';
   });
   if (!html) html = `<div class="empty-state"><div class="empty-icon">◻</div><div>Nenhuma tarefa pendente 🎉</div></div>`;
   container.innerHTML = html;
 }
 
-function toggleGlobalTripFolder(id) {
-  expandedTrips[id] = !expandedTrips[id];
-  renderGlobalTrips();
-}
-
 function renderGlobalTrips() {
   const container = document.getElementById('global-trips-body');
   let html = '';
   const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
-  
   db.leads.forEach(l => {
     if (!(l.trips||[]).length) return;
-    
-    const isExp = expandedTrips[l.id];
-    
-    html += `<div style="margin-bottom:12px">
-      <div class="global-lead-header" onclick="toggleGlobalTripFolder('${l.id}')">
-        <div class="global-lead-name">${l.name.toUpperCase()}</div>
-        <div class="global-lead-count">${l.trips.length} viagem(ns) ${isExp ? '▼' : '▶'}</div>
+    html += `<div style="margin-bottom:20px">
+      <div class="trip-lead-name">${l.name.toUpperCase()}</div>`;
+    l.trips.forEach(t => {
+      html += `<div class="trip-card">
+        <div class="trip-top">
+          <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
+          <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+        </div>
+        <div class="trip-grid">
+          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+        </div>
       </div>`;
-      
-    if (isExp) {
-      l.trips.forEach(t => {
-        html += `<div class="trip-card" style="margin-left: 12px; margin-right: 12px;">
-          <div class="trip-top">
-            <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
-            <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
-          </div>
-          <div class="trip-grid">
-            <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
-            <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
-          </div>
-        </div>`;
-      });
-    }
+    });
     html += '</div>';
   });
   if (!html) html = `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>`;
@@ -1490,6 +1431,5 @@ function toast(msg) {
 // ══════════════════════════════════════
 loadDB().then(() => renderHome());
 </script>
-
 </body>
 </html>
