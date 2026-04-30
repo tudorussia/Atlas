@@ -2,310 +2,752 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ATLAS - Painel de Leads</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         :root {
-            --atlas-gold: #ffb800;
-            --atlas-dark: #12141d;
-            --atlas-card: #1c1f2e;
-            --atlas-border: #2d3142;
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --bg-input: #1f242c;
+            --border-color: #30363d;
+            --text-gold: #ffb800;
+            --bg-gold: #ffb800;
+            --text-muted: #8b949e;
         }
+
         body {
-            background-color: var(--atlas-dark);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding-bottom: 80px;
+            background-color: var(--bg-main);
+            color: #c9d1d9;
+            font-family: 'Inter', sans-serif;
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
-        .gold-text { color: var(--atlas-gold); }
-        .gold-bg { background-color: var(--atlas-gold); color: #000; }
-        .card { background: var(--atlas-card); border: 1px solid var(--atlas-border); border-radius: 12px; }
-        .tab-inactive { color: #6b7280; }
-        .tab-active { color: var(--atlas-gold); border-bottom: 2px solid var(--atlas-gold); }
-        .hidden-section { display: none; }
+
+        /* Estilização Base */
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; }
+        .gold-text { color: var(--text-gold); }
+        .gold-bg { background-color: var(--bg-gold); color: #000; }
+        
         input, textarea, select {
-            background: #25293c !important;
-            border: 1px solid var(--atlas-border) !important;
+            background: var(--bg-input) !important;
+            border: 1px solid var(--border-color) !important;
             color: white !important;
+            font-size: 16px !important; /* Previne zoom no iPhone */
         }
-        .bottom-nav {
-            background: rgba(18, 20, 29, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--atlas-border);
+        input:focus, textarea:focus, select:focus { border-color: var(--text-gold) !important; outline: none; }
+
+        /* Modais estilo Bottom Sheet (iOS) */
+        .bottom-sheet {
+            position: fixed; top: 100%; left: 0; right: 0; bottom: 0;
+            background: var(--bg-card);
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
         }
-        /* Loader de salvamento */
-        #sync-status { transition: opacity 0.3s; }
+        .bottom-sheet.open { transform: translateY(-100%); top: auto; height: 90vh; }
+        .sheet-handle { width: 40px; height: 4px; background: var(--border-color); border-radius: 2px; margin: 10px auto; }
+        .sheet-content { overflow-y: auto; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); flex: 1; }
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 90;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Abas de Navegação (Filtros e Info) */
+        .pill-filter { border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; transition: all 0.2s; white-space: nowrap; }
+        .pill-filter.active { border-color: var(--text-gold); color: var(--text-gold); }
+        
+        .tab-nav { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; padding-bottom: 8px; border-bottom: 2px solid transparent; }
+        .tab-nav.active { color: var(--text-gold); border-bottom-color: var(--text-gold); }
+
+        /* Utilitários */
+        .hidden-view { display: none !important; }
+        .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .status-novo { background: rgba(255, 184, 0, 0.2); color: var(--text-gold); }
+        .status-lead { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+        .status-cliente { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .status-inativo { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+        
+        /* Avatar Circular */
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-input); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; color: var(--text-gold); }
     </style>
 </head>
 <body>
 
-    <header class="p-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-bold tracking-widest gold-text">ATLAS</h1>
-            <p class="text-xs text-gray-500 uppercase tracking-tighter">Painel de Leads</p>
-        </div>
-        <div id="sync-status" class="text-xs text-gray-500 opacity-0">
-            <i class="fa fa-sync fa-spin"></i> Sincronizando...
-        </div>
-    </header>
+    <div id="sync-status" class="fixed top-0 left-0 right-0 bg-[#000] text-xs text-center py-1 text-gray-400 z-50 hidden transition-all">
+        <i class="fa fa-sync fa-spin"></i> Salvando na nuvem...
+    </div>
 
-    <div id="section-home" class="p-4 space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-400">Total</p>
-                <h2 id="stat-total" class="text-3xl font-bold gold-text">-</h2>
-                <p class="text-[10px] text-gray-500">contatos</p>
+    <div id="view-dashboard" class="pt-6 px-4 pb-24 min-h-screen">
+        <header class="mb-6 flex justify-between items-center mt-4">
+            <div>
+                <h1 class="text-xl font-bold tracking-widest gold-text">ATLAS</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Painel de Leads</p>
             </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-400">Clientes</p>
-                <h2 id="stat-clientes" class="text-3xl font-bold text-green-500">-</h2>
-                <p class="text-[10px] text-gray-500">ativos</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-400">Leads</p>
-                <h2 id="stat-leads" class="text-3xl font-bold text-blue-400">-</h2>
-                <p class="text-[10px] text-gray-500">potenciais</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-[10px] uppercase text-gray-400">Tarefas</p>
-                <h2 id="stat-tarefas" class="text-3xl font-bold text-orange-400">-</h2>
-                <p class="text-[10px] text-gray-500">pendentes</p>
-            </div>
-        </div>
+        </header>
 
-        <div class="relative mt-4">
-            <input type="text" id="search-input" placeholder="Buscar contatos..." class="w-full p-3 pl-10 rounded-xl text-sm outline-none">
-            <i class="fa fa-search absolute left-3 top-3.5 text-gray-500"></i>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="card p-4">
+                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Total</p>
+                <h2 id="stat-total" class="text-3xl font-bold gold-text mt-1">-</h2>
+                <p class="text-[10px] text-gray-600 mt-1">contatos</p>
+            </div>
+            <div class="card p-4">
+                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Clientes</p>
+                <h2 id="stat-clientes" class="text-3xl font-bold text-green-500 mt-1">-</h2>
+                <p class="text-[10px] text-gray-600 mt-1">ativos</p>
+            </div>
+            <div class="card p-4">
+                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Leads</p>
+                <h2 id="stat-leads" class="text-3xl font-bold text-blue-400 mt-1">-</h2>
+                <p class="text-[10px] text-gray-600 mt-1">potenciais</p>
+            </div>
+            <div class="card p-4">
+                <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Tarefas</p>
+                <h2 id="stat-tarefas" class="text-3xl font-bold text-orange-400 mt-1">-</h2>
+                <p class="text-[10px] text-gray-600 mt-1">pendentes globais</p>
+            </div>
         </div>
 
-        <div class="mt-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-semibold uppercase text-gray-400">— Lista de Contatos</h3>
+        <div class="relative mb-4">
+            <input type="text" id="search-input" placeholder="Buscar por nome, celular, email..." class="w-full p-3 pl-10 rounded-lg text-sm bg-[#161b22]" onkeyup="filterList()">
+            <i class="fa fa-search absolute left-3 top-3.5 text-gray-500 text-sm"></i>
+        </div>
+        
+        <div class="flex overflow-x-auto gap-2 pb-2 mb-4" id="filter-pills" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
+            <button class="pill-filter active" onclick="setFilter('Todos')">Todos</button>
+            <button class="pill-filter" onclick="setFilter('Novo')">Novo</button>
+            <button class="pill-filter" onclick="setFilter('Lead')">Lead</button>
+            <button class="pill-filter" onclick="setFilter('Cliente')">Cliente</button>
+            <button class="pill-filter" onclick="setFilter('Inativo')">Inativo</button>
+        </div>
+
+        <p class="text-[10px] text-gray-600 uppercase tracking-wider mb-3">— <span id="list-count">0</span> Contatos</p>
+        <div id="contacts-list" class="space-y-3">
+            <div class="text-center py-10 text-gray-600"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+
+        <button onclick="openModal('sheet-lead')" class="fixed bottom-6 right-6 w-14 h-14 gold-bg rounded-full shadow-[0_0_15px_rgba(255,184,0,0.3)] flex items-center justify-center text-xl z-40">
+            <i class="fa fa-plus"></i>
+        </button>
+    </div>
+
+    <div id="view-contact" class="hidden-view pt-6 px-4 pb-10 min-h-screen">
+        <div class="mt-4 flex items-center mb-6">
+            <button onclick="closeContactView()" class="text-gray-400 w-10 h-10 flex items-center justify-center bg-[#161b22] rounded-full mr-3"><i class="fa fa-chevron-left text-sm"></i></button>
+            <h2 id="cv-header-name" class="text-lg font-bold">Nome</h2>
+        </div>
+
+        <div class="flex items-center gap-4 mb-8">
+            <div id="cv-avatar" class="avatar w-16 h-16 text-2xl">D</div>
+            <div>
+                <h1 id="cv-name" class="text-2xl font-bold">Daniel</h1>
+                <div class="h-0.5 w-6 bg-gray-700 mt-2"></div>
             </div>
-            <div id="contacts-list" class="space-y-3">
-                <div class="text-center py-10 text-gray-600">
-                    <i class="fa fa-spinner fa-spin text-4xl mb-2"></i>
-                    <p>Carregando banco de dados...</p>
+        </div>
+
+        <div class="flex gap-6 border-b border-[#30363d] mb-6">
+            <button class="tab-nav active" id="tab-btn-info" onclick="switchContactTab('info')">Info</button>
+            <button class="tab-nav" id="tab-btn-tarefas" onclick="switchContactTab('tarefas')">Tarefas</button>
+            <button class="tab-nav" id="tab-btn-viagens" onclick="switchContactTab('viagens')">Viagens</button>
+            <button class="tab-nav" id="tab-btn-docs" onclick="switchContactTab('docs')">Docs</button>
+        </div>
+
+        <div id="tab-content-info" class="space-y-4">
+            <div class="card p-4 border border-[#ffb800]/20 bg-[#161b22]">
+                <p class="text-[10px] uppercase text-gray-500 font-bold mb-1">Primeiro Contato</p>
+                <p id="cv-date" class="text-sm gold-text font-mono">--/--/---- --:--</p>
+            </div>
+            
+            <div class="card overflow-hidden">
+                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
+                    <i class="fa fa-mobile-alt text-gray-500 w-4 text-center"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500">Celular</p><p id="cv-phone" class="text-sm">-</p></div>
+                </div>
+                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
+                    <i class="fa fa-envelope text-gray-500 w-4 text-center"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500">Email</p><p id="cv-email" class="text-sm">-</p></div>
+                </div>
+                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
+                    <i class="fa fa-satellite-dish text-gray-500 w-4 text-center"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500">Canal</p><p id="cv-channel" class="text-sm">-</p></div>
+                </div>
+                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
+                    <i class="fa fa-map-pin text-gray-500 w-4 text-center"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500">Localização</p><p id="cv-location" class="text-sm">-</p></div>
+                </div>
+                <div class="p-4 border-b border-[#30363d] flex items-center gap-3">
+                    <i class="far fa-dot-circle text-gray-500 w-4 text-center"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500 mb-1">Status</p><span id="cv-status" class="status-badge">-</span></div>
+                </div>
+                <div class="p-4 flex items-start gap-3">
+                    <i class="fa fa-align-left text-gray-500 w-4 text-center mt-1"></i>
+                    <div><p class="text-[10px] uppercase text-gray-500">Observações</p><p id="cv-notes" class="text-sm text-gray-400 whitespace-pre-line mt-1">-</p></div>
                 </div>
             </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="editCurrentContact()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm flex justify-center items-center gap-2"><i class="fa fa-pen text-gray-400 text-xs"></i> Editar</button>
+                <button onclick="deleteCurrentContact()" class="flex-1 bg-[#2d1114] text-red-400 p-3 rounded-lg text-sm border border-red-900/50 flex justify-center items-center gap-2"><i class="fa fa-times text-xs"></i> Excluir</button>
+            </div>
+        </div>
+
+        <div id="tab-content-tarefas" class="hidden-view space-y-4">
+            <p class="text-[10px] text-gray-600 uppercase tracking-wider uppercase mb-2"><span id="cv-tasks-open">0</span> Abertas • <span id="cv-tasks-done">0</span> Concluídas</p>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="new-task-input" placeholder="Nova tarefa..." class="w-full p-3 rounded-lg text-sm bg-[#161b22]">
+                <button onclick="addTask()" class="gold-bg w-12 rounded-lg flex-shrink-0 flex items-center justify-center"><i class="fa fa-plus"></i></button>
+            </div>
+            <div id="cv-tasks-list" class="space-y-2"></div>
+        </div>
+
+        <div id="tab-content-viagens" class="hidden-view space-y-4">
+            <button onclick="openModal('sheet-trip')" class="w-full gold-bg p-3 rounded-lg text-sm font-bold flex justify-center items-center gap-2 mb-4">+ Nova Viagem</button>
+            <div id="cv-trips-list" class="space-y-3"></div>
+        </div>
+
+        <div id="tab-content-docs" class="hidden-view space-y-4">
+            <div class="card p-4 bg-[#161b22]">
+                <p class="text-[10px] text-gray-400 uppercase mb-3">Salvar Link do Google Drive</p>
+                <input type="text" id="new-doc-name" placeholder="Nome do arquivo (ex: Passaporte)" class="w-full p-3 rounded-lg text-sm mb-2">
+                <input type="url" id="new-doc-url" placeholder="Cole o link do Drive aqui..." class="w-full p-3 rounded-lg text-sm mb-3">
+                <button onclick="addDoc()" class="w-full bg-[#1f242c] border border-[var(--border-color)] p-3 rounded-lg text-sm gold-text font-bold">Salvar Documento</button>
+            </div>
+            <p class="text-[10px] text-gray-600 uppercase tracking-wider mt-4 mb-2">Arquivos Salvos</p>
+            <div id="cv-docs-list" class="space-y-2"></div>
         </div>
     </div>
 
-    <div id="section-tasks" class="hidden-section p-4">
-        <h2 class="text-lg font-bold mb-4 gold-text">Minhas Tarefas</h2>
-        <form id="task-form" class="mb-6 flex gap-2">
-            <input type="text" id="task-desc" placeholder="Ex: Enviar VPN para Daniel" class="w-full p-3 rounded-lg text-sm" required>
-            <button type="submit" class="gold-bg px-4 rounded-lg"><i class="fa fa-plus font-bold"></i></button>
-        </form>
-        <div id="tasks-list" class="space-y-3"></div>
-    </div>
 
-    <div id="modal-lead" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 p-4">
-        <div class="card w-full max-w-md mx-auto mt-10 p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-bold gold-text">Novo Lead / Cliente</h2>
-                <button onclick="toggleModal('modal-lead')" class="text-gray-400"><i class="fa fa-times"></i></button>
-            </div>
-            <form id="lead-form" class="space-y-4">
-                <input type="text" id="name" placeholder="Nome Completo" class="w-full p-3 rounded-lg text-sm" required>
-                <input type="tel" id="phone" placeholder="Celular / WhatsApp" class="w-full p-3 rounded-lg text-sm" required>
-                <input type="email" id="email" placeholder="Email" class="w-full p-3 rounded-lg text-sm">
-                <select id="status" class="w-full p-3 rounded-lg text-sm">
-                    <option value="Lead">Lead Potencial</option>
-                    <option value="Cliente">Cliente Ativo</option>
-                </select>
-                <textarea id="notes" placeholder="Cidades, hotéis, datas de viagem..." class="w-full p-3 rounded-lg text-sm h-24"></textarea>
-                <button type="submit" class="w-full gold-bg p-3 rounded-lg font-bold mt-4">SALVAR CONTATO</button>
+    <div class="overlay" id="overlay" onclick="closeAllModals()"></div>
+
+    <div id="sheet-lead" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-content">
+            <h3 class="text-[10px] uppercase font-bold gold-text mb-4" id="modal-lead-title">+ NOVO LEAD</h3>
+            <form id="form-lead" class="space-y-4">
+                <input type="hidden" id="f-id">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Nome *</label>
+                        <input type="text" id="f-name" placeholder="Nome completo" class="w-full p-3 rounded-lg mt-1" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Status</label>
+                        <select id="f-status" class="w-full p-3 rounded-lg mt-1 text-sm">
+                            <option value="Novo">Novo</option>
+                            <option value="Lead">Lead</option>
+                            <option value="Cliente">Cliente</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Celular</label>
+                        <input type="tel" id="f-phone" placeholder="+55..." class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Email</label>
+                        <input type="email" id="f-email" placeholder="email@..." class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Cidade</label>
+                        <input type="text" id="f-city" placeholder="Ex: Curitiba" class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">País</label>
+                        <input type="text" id="f-country" placeholder="Ex: Brasil" class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-500 uppercase ml-1">Canal</label>
+                    <select id="f-channel" class="w-full p-3 rounded-lg mt-1 text-sm">
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Email">Email</option>
+                        <option value="Indicação">Indicação</option>
+                        <option value="Site">Site Passaporte</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-500 uppercase ml-1">Observações</label>
+                    <textarea id="f-notes" placeholder="Notas sobre o lead..." class="w-full p-3 rounded-lg mt-1 text-sm h-20"></textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeAllModals()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm text-gray-300">Cancelar</button>
+                    <button type="submit" class="flex-1 gold-bg p-3 rounded-lg text-sm font-bold">Salvar</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <button onclick="toggleModal('modal-lead')" class="fixed bottom-24 right-6 w-14 h-14 gold-bg rounded-full shadow-lg flex items-center justify-center text-2xl z-40">
-        <i class="fa fa-plus"></i>
-    </button>
-
-    <nav class="fixed bottom-0 left-0 right-0 h-20 bottom-nav flex justify-around items-center px-4 z-50">
-        <button onclick="showSection('home')" class="flex flex-col items-center tab-active transition-all" id="nav-home">
-            <i class="fa fa-users text-xl"></i>
-            <span class="text-[10px] mt-1 uppercase font-bold">Leads</span>
-        </button>
-        <button onclick="showSection('tasks')" class="flex flex-col items-center tab-inactive" id="nav-tasks">
-            <i class="fa fa-check-double text-xl"></i>
-            <span class="text-[10px] mt-1 uppercase font-bold">Tarefas</span>
-        </button>
-    </nav>
+    <div id="sheet-trip" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-content">
+            <h3 class="text-[10px] uppercase font-bold gold-text mb-4">+ NOVA VIAGEM</h3>
+            <form id="form-trip" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Destino *</label>
+                        <input type="text" id="t-dest" placeholder="Ex: Rússia" class="w-full p-3 rounded-lg mt-1" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Hotel</label>
+                        <input type="text" id="t-hotel" placeholder="Nome do hotel" class="w-full p-3 rounded-lg mt-1">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Entrada</label>
+                        <input type="date" id="t-in" class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Saída</label>
+                        <input type="date" id="t-out" class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Preço Fechado</label>
+                        <input type="number" id="t-price" placeholder="0,00" class="w-full p-3 rounded-lg mt-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Status</label>
+                        <select id="t-status" class="w-full p-3 rounded-lg mt-1 text-sm">
+                            <option value="Cotação">Cotação</option>
+                            <option value="Confirmada">Confirmada</option>
+                            <option value="Finalizada">Finalizada</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-500 uppercase ml-1">Notas da Viagem</label>
+                    <textarea id="t-notes" placeholder="Voo, translado..." class="w-full p-3 rounded-lg mt-1 text-sm h-16"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeAllModals()" class="flex-1 bg-[#1f242c] p-3 rounded-lg text-sm text-gray-300">Cancelar</button>
+                    <button type="submit" class="flex-1 gold-bg p-3 rounded-lg text-sm font-bold">Salvar Viagem</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-        // Configurações do Banco de Dados (JSONBin)
+        // Configurações JSONBin
         const JSONBIN_ID = '69f2a4cf856a6821898b51d0'; 
         const JSONBIN_KEY = '$2a$10$dhzKzcr352sQVzbe1jCeFuFSu22MYZBByhqPlCdM0YjK1J6OSi7Vq'; 
-        
         const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
-        let db = { contacts: [], tasks: [] };
+        
+        let db = { contacts: [] };
+        let activeFilter = 'Todos';
+        let currentContactId = null;
 
-        // Mostrar aviso de salvamento
-        function showSync(isSyncing) {
-            document.getElementById('sync-status').style.opacity = isSyncing ? '1' : '0';
+        // Formatação de Data
+        function getNowStr() {
+            const now = new Date();
+            return `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
         }
 
-        // Carregar dados da Nuvem (JSONBin)
+        // ====== NUVEM / SINCRONIZAÇÃO ======
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}/latest`, {
-                    headers: { 'X-Access-Key': JSONBIN_KEY }
-                });
-                if(!response.ok) throw new Error('Erro ao buscar dados');
+                const response = await fetch(`${API_URL}/latest`, { headers: { 'X-Access-Key': JSONBIN_KEY } });
                 const result = await response.json();
-                db = result.record || { contacts: [], tasks: [] };
-                
-                // Garantir que as arrays existam se o bin for vazio/novo
+                db = result.record || { contacts: [] };
+                // Migração de segurança se o DB antigo tiver tarefas soltas fora dos contatos
                 if(!db.contacts) db.contacts = [];
-                if(!db.tasks) db.tasks = [];
-                
-                renderAll();
+                renderDashboard();
             } catch (error) {
-                console.error('Erro de conexão:', error);
-                document.getElementById('contacts-list').innerHTML = `<div class="text-center py-10 text-red-500"><p>Erro ao conectar ao banco de dados. Verifique suas chaves.</p></div>`;
+                document.getElementById('contacts-list').innerHTML = `<p class="text-center text-red-500 text-sm mt-10">Erro de conexão. Tente recarregar.</p>`;
             }
         }
 
-        // Salvar dados na Nuvem (JSONBin)
         async function saveData() {
-            showSync(true);
+            const syncUI = document.getElementById('sync-status');
+            syncUI.style.display = 'block';
             try {
                 await fetch(API_URL, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Access-Key': JSONBIN_KEY
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-Access-Key': JSONBIN_KEY },
                     body: JSON.stringify(db)
                 });
-                renderAll();
             } catch (error) {
-                alert('Erro ao salvar na nuvem!');
-                console.error(error);
+                console.error("Erro ao salvar:", error);
             } finally {
-                showSync(false);
+                setTimeout(() => syncUI.style.display = 'none', 1000);
             }
         }
 
-        // Navegação de Telas
-        function showSection(section) {
-            document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden-section'));
-            document.getElementById('section-' + section).classList.remove('hidden-section');
-            document.querySelectorAll('nav button').forEach(b => {
-                b.classList.remove('tab-active'); b.classList.add('tab-inactive');
+        // ====== INTERFACE PRINCIPAL (DASHBOARD) ======
+        function renderDashboard() {
+            const list = document.getElementById('contacts-list');
+            list.innerHTML = '';
+            
+            const search = document.getElementById('search-input').value.toLowerCase();
+            
+            // Cálculos Stats
+            let totalT = 0;
+            db.contacts.forEach(c => {
+                if(c.tasks) totalT += c.tasks.filter(t => !t.done).length;
             });
-            document.getElementById('nav-' + section).classList.add('tab-active');
-            document.getElementById('nav-' + section).classList.remove('tab-inactive');
-        }
 
-        function toggleModal(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
-
-        // Adicionar Lead
-        document.getElementById('lead-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newLead = {
-                id: Date.now(),
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                status: document.getElementById('status').value,
-                notes: document.getElementById('notes').value,
-                dateAdded: new Date().toLocaleString('pt-BR')
-            };
-            db.contacts.push(newLead);
-            e.target.reset();
-            toggleModal('modal-lead');
-            saveData();
-        });
-
-        // Adicionar Tarefa
-        document.getElementById('task-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const input = document.getElementById('task-desc');
-            db.tasks.push({ id: Date.now(), desc: input.value, done: false });
-            input.value = '';
-            saveData();
-        });
-
-        // Renderizar Interface
-        function renderAll() {
-            // Stats
             document.getElementById('stat-total').innerText = db.contacts.length;
             document.getElementById('stat-clientes').innerText = db.contacts.filter(c => c.status === 'Cliente').length;
             document.getElementById('stat-leads').innerText = db.contacts.filter(c => c.status === 'Lead').length;
-            document.getElementById('stat-tarefas').innerText = db.tasks.filter(t => !t.done).length;
+            document.getElementById('stat-tarefas').innerText = totalT;
 
-            // Contatos
-            const list = document.getElementById('contacts-list');
-            list.innerHTML = '';
-            if (db.contacts.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-gray-600"><p>Nenhum contato encontrado</p></div>`;
-            } else {
-                db.contacts.slice().reverse().forEach(contact => {
-                    const div = document.createElement('div');
-                    div.className = 'card p-4';
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-sm gold-text">${contact.name}</h4>
-                                <p class="text-xs text-gray-400 mt-1"><i class="fab fa-whatsapp"></i> ${contact.phone}</p>
-                                ${contact.email ? `<p class="text-xs text-gray-400 mt-1"><i class="far fa-envelope"></i> ${contact.email}</p>` : ''}
-                            </div>
-                            <button onclick="deleteContact(${contact.id})" class="text-red-900"><i class="fa fa-trash"></i></button>
-                        </div>
-                        ${contact.notes ? `<div class="mt-3 p-2 bg-[#25293c] rounded text-xs text-gray-300 whitespace-pre-line">${contact.notes}</div>` : ''}
-                        <div class="mt-3 flex justify-between items-center border-t border-[#2d3142] pt-2">
-                            <span class="text-[9px] px-2 py-0.5 rounded ${contact.status === 'Cliente' ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'} uppercase">
-                                ${contact.status}
-                            </span>
-                            <span class="text-[10px] text-gray-600">${contact.dateAdded}</span>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
+            // Filtragem
+            let filtered = db.contacts.filter(c => {
+                const matchBusca = c.name.toLowerCase().includes(search) || (c.phone && c.phone.includes(search));
+                const matchPill = activeFilter === 'Todos' || c.status === activeFilter;
+                return matchBusca && matchPill;
+            });
+
+            document.getElementById('list-count').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-gray-600"><div class="w-10 h-10 border border-[#30363d] rotate-45 mx-auto mb-4"></div><p class="text-xs">Nenhum contato encontrado</p></div>`;
+                return;
             }
 
-            // Tarefas
-            const tList = document.getElementById('tasks-list');
-            tList.innerHTML = '';
-            db.tasks.slice().reverse().forEach(task => {
+            filtered.slice().reverse().forEach(c => {
+                let badgeClass = `status-${c.status.toLowerCase()}`;
                 const div = document.createElement('div');
-                div.className = `card p-4 flex justify-between items-center ${task.done ? 'opacity-50' : ''}`;
+                div.className = 'card p-3 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer';
+                div.onclick = () => openContactView(c.id);
                 div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${task.id})" class="w-4 h-4 rounded bg-[#25293c] border-[--atlas-border]">
-                        <span class="text-sm ${task.done ? 'line-through text-gray-500' : ''}">${task.desc}</span>
+                    <div class="avatar flex-shrink-0">${c.name.charAt(0).toUpperCase()}</div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-sm text-gray-200 truncate">${c.name}</h4>
+                        <p class="text-xs text-gray-500 truncate">${c.channel} ${c.phone ? '• '+c.phone : ''}</p>
+                        <div class="mt-2 flex gap-2 items-center">
+                            <span class="status-badge ${badgeClass}">${c.status}</span>
+                            ${c.tasks && c.tasks.filter(t=>!t.done).length > 0 ? `<span class="text-[9px] text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded"><i class="fa fa-bell"></i> ${c.tasks.filter(t=>!t.done).length}</span>` : ''}
+                        </div>
                     </div>
-                    <button onclick="deleteTask(${task.id})" class="text-red-900"><i class="fa fa-trash"></i></button>
+                    <div class="text-[10px] text-gray-600 self-start mt-1">${c.dateAdded.split(' ')[0]}</div>
                 `;
-                tList.appendChild(div);
+                list.appendChild(div);
             });
         }
 
-        // Ações de Delete e Toggle
-        function deleteContact(id) {
-            if(confirm('Excluir contato permanentemente?')) {
-                db.contacts = db.contacts.filter(c => c.id !== id);
-                saveData();
-            }
+        function setFilter(filter) {
+            activeFilter = filter;
+            document.querySelectorAll('.pill-filter').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === filter);
+            });
+            renderDashboard();
         }
-        function deleteTask(id) {
-            db.tasks = db.tasks.filter(t => t.id !== id);
+        function filterList() { renderDashboard(); }
+
+        // ====== ÁREA DE TRABALHO DO CLIENTE ======
+        function openContactView(id) {
+            currentContactId = id;
+            const c = db.contacts.find(x => x.id === id);
+            if(!c) return;
+
+            // Garantir arrays
+            if(!c.tasks) c.tasks = [];
+            if(!c.trips) c.trips = [];
+            if(!c.docs) c.docs = [];
+
+            // Popular Header
+            document.getElementById('cv-header-name').innerText = c.name;
+            document.getElementById('cv-name').innerText = c.name;
+            document.getElementById('cv-avatar').innerText = c.name.charAt(0).toUpperCase();
+            
+            // Popular Info Tab
+            document.getElementById('cv-date').innerText = c.dateAdded;
+            document.getElementById('cv-phone').innerText = c.phone || '—';
+            document.getElementById('cv-email').innerText = c.email || '—';
+            document.getElementById('cv-channel').innerText = c.channel || '—';
+            document.getElementById('cv-location').innerText = [c.city, c.country].filter(Boolean).join(', ') || '—';
+            document.getElementById('cv-notes').innerText = c.notes || '—';
+            
+            const badge = document.getElementById('cv-status');
+            badge.innerText = c.status;
+            badge.className = `status-badge status-${c.status.toLowerCase()}`;
+
+            // Trocar Telas
+            document.getElementById('view-dashboard').classList.add('hidden-view');
+            document.getElementById('view-contact').classList.remove('hidden-view');
+            
+            // Resetar scroll e ir para a aba Info
+            window.scrollTo(0,0);
+            switchContactTab('info');
+        }
+
+        function closeContactView() {
+            currentContactId = null;
+            document.getElementById('view-contact').classList.add('hidden-view');
+            document.getElementById('view-dashboard').classList.remove('hidden-view');
+            renderDashboard();
+        }
+
+        function switchContactTab(tabName) {
+            ['info', 'tarefas', 'viagens', 'docs'].forEach(t => {
+                document.getElementById('tab-btn-' + t).classList.remove('active');
+                document.getElementById('tab-content-' + t).classList.add('hidden-view');
+            });
+            document.getElementById('tab-btn-' + tabName).classList.add('active');
+            document.getElementById('tab-content-' + tabName).classList.remove('hidden-view');
+
+            if(tabName === 'tarefas') renderTasks();
+            if(tabName === 'viagens') renderTrips();
+            if(tabName === 'docs') renderDocs();
+        }
+
+        // --- SUB-FUNÇÕES DA ÁREA DE TRABALHO ---
+
+        // Tarefas
+        function renderTasks() {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            const list = document.getElementById('cv-tasks-list');
+            list.innerHTML = '';
+            
+            let open = 0, done = 0;
+            c.tasks.forEach(t => t.done ? done++ : open++);
+            document.getElementById('cv-tasks-open').innerText = open;
+            document.getElementById('cv-tasks-done').innerText = done;
+
+            c.tasks.slice().reverse().forEach(task => {
+                const div = document.createElement('div');
+                div.className = `card p-3 flex justify-between items-center bg-[#1c212a] ${task.done ? 'opacity-50' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${task.id})" class="w-5 h-5 rounded bg-[#0d1117] border-[#30363d] accent-[#ffb800] flex-shrink-0">
+                        <span class="text-sm truncate ${task.done ? 'line-through text-gray-500' : 'text-gray-200'}">${task.desc}</span>
+                    </div>
+                    <button onclick="deleteTask(${task.id})" class="text-red-900 ml-2 p-2"><i class="fa fa-times"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        function addTask() {
+            const input = document.getElementById('new-task-input');
+            if(!input.value.trim()) return;
+            const c = db.contacts.find(x => x.id === currentContactId);
+            c.tasks.push({ id: Date.now(), desc: input.value, done: false });
+            input.value = '';
+            renderTasks();
             saveData();
         }
         function toggleTask(id) {
-            const t = db.tasks.find(t => t.id === id);
-            if(t) { t.done = !t.done; saveData(); }
+            const c = db.contacts.find(x => x.id === currentContactId);
+            const t = c.tasks.find(x => x.id === id);
+            if(t) t.done = !t.done;
+            renderTasks();
+            saveData();
+        }
+        function deleteTask(id) {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            c.tasks = c.tasks.filter(x => x.id !== id);
+            renderTasks();
+            saveData();
         }
 
-        // Iniciar
+        // Viagens
+        function renderTrips() {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            const list = document.getElementById('cv-trips-list');
+            list.innerHTML = '';
+            
+            if(c.trips.length === 0) list.innerHTML = `<p class="text-center text-xs text-gray-600 mt-6">Nenhuma viagem registrada.</p>`;
+
+            c.trips.forEach(trip => {
+                const div = document.createElement('div');
+                div.className = 'card p-4 bg-[#161b22]';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-sm text-gray-200"><i class="fa fa-plane text-gray-500 text-xs mr-1"></i> ${trip.dest}</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] uppercase px-2 py-0.5 rounded bg-[#30363d] text-gray-400">${trip.status}</span>
+                            <button onclick="deleteTrip(${trip.id})" class="text-gray-600"><i class="fa fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-3">
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase">Período</p>
+                            <p class="text-xs gold-text">${formatDateBr(trip.in)} <i class="fa fa-arrow-right text-[8px] text-gray-600 mx-1"></i> ${formatDateBr(trip.out)}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-gray-500 uppercase">Preço</p>
+                            <p class="text-xs text-gray-300">R$ ${trip.price || '---'}</p>
+                        </div>
+                    </div>
+                    ${trip.hotel ? `<p class="text-xs text-gray-400 mt-3 border-t border-[#30363d] pt-2"><i class="fa fa-bed w-4 text-center"></i> ${trip.hotel}</p>` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+        function deleteTrip(id) {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            c.trips = c.trips.filter(x => x.id !== id);
+            renderTrips();
+            saveData();
+        }
+        function formatDateBr(isoDate) {
+            if(!isoDate) return '--/--/----';
+            const [y,m,d] = isoDate.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        // Documentos
+        function renderDocs() {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            const list = document.getElementById('cv-docs-list');
+            list.innerHTML = '';
+            
+            if(c.docs.length === 0) list.innerHTML = `<p class="text-center text-xs text-gray-600 mt-4">Nenhum arquivo salvo.</p>`;
+
+            c.docs.forEach(doc => {
+                const div = document.createElement('div');
+                div.className = 'card p-3 bg-[#1c212a] flex justify-between items-center';
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <a href="${doc.url}" target="_blank" class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0"><i class="fab fa-google-drive"></i></div>
+                            <span class="text-sm text-blue-400 underline truncate">${doc.name}</span>
+                        </a>
+                    </div>
+                    <button onclick="deleteDoc(${doc.id})" class="text-red-900 p-2 shrink-0"><i class="fa fa-trash text-xs"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        function addDoc() {
+            const name = document.getElementById('new-doc-name').value;
+            const url = document.getElementById('new-doc-url').value;
+            if(!name || !url) return alert("Preencha o nome e o link do Drive.");
+            
+            const c = db.contacts.find(x => x.id === currentContactId);
+            c.docs.push({ id: Date.now(), name, url });
+            document.getElementById('new-doc-name').value = '';
+            document.getElementById('new-doc-url').value = '';
+            renderDocs();
+            saveData();
+        }
+        function deleteDoc(id) {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            c.docs = c.docs.filter(x => x.id !== id);
+            renderDocs();
+            saveData();
+        }
+
+        // Edição e Exclusão de Contato
+        function deleteCurrentContact() {
+            if(confirm("Excluir este contato permanentemente? Isso apagará tarefas, viagens e documentos salvos dele.")) {
+                db.contacts = db.contacts.filter(x => x.id !== currentContactId);
+                saveData();
+                closeContactView();
+            }
+        }
+        function editCurrentContact() {
+            const c = db.contacts.find(x => x.id === currentContactId);
+            document.getElementById('f-id').value = c.id;
+            document.getElementById('f-name').value = c.name;
+            document.getElementById('f-status').value = c.status;
+            document.getElementById('f-phone').value = c.phone || '';
+            document.getElementById('f-email').value = c.email || '';
+            document.getElementById('f-city').value = c.city || '';
+            document.getElementById('f-country').value = c.country || '';
+            document.getElementById('f-channel').value = c.channel || 'WhatsApp';
+            document.getElementById('f-notes').value = c.notes || '';
+            
+            document.getElementById('modal-lead-title').innerText = 'EDITAR CONTATO';
+            openModal('sheet-lead');
+        }
+
+        // ====== MODAIS (BOTTOM SHEETS) ======
+        function openModal(id) {
+            if(id === 'sheet-lead' && !document.getElementById('f-id').value) {
+                document.getElementById('form-lead').reset();
+                document.getElementById('modal-lead-title').innerText = '+ NOVO LEAD';
+            }
+            if(id === 'sheet-trip') document.getElementById('form-trip').reset();
+
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById(id).classList.add('open');
+        }
+
+        function closeAllModals() {
+            document.getElementById('overlay').classList.remove('active');
+            document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById('f-id').value = ''; // reseta id oculto
+        }
+
+        // Formulário de Lead
+        document.getElementById('form-lead').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idToEdit = document.getElementById('f-id').value;
+            
+            const contactData = {
+                name: document.getElementById('f-name').value,
+                status: document.getElementById('f-status').value,
+                phone: document.getElementById('f-phone').value,
+                email: document.getElementById('f-email').value,
+                city: document.getElementById('f-city').value,
+                country: document.getElementById('f-country').value,
+                channel: document.getElementById('f-channel').value,
+                notes: document.getElementById('f-notes').value,
+            };
+
+            if (idToEdit) {
+                // Editando
+                let c = db.contacts.find(x => x.id == idToEdit);
+                Object.assign(c, contactData);
+                openContactView(c.id); // Atualiza a tela de dentro
+            } else {
+                // Criando novo
+                contactData.id = Date.now();
+                contactData.dateAdded = getNowStr();
+                contactData.tasks = [];
+                contactData.trips = [];
+                contactData.docs = [];
+                db.contacts.push(contactData);
+                renderDashboard();
+            }
+
+            saveData();
+            closeAllModals();
+        });
+
+        // Formulário de Viagem
+        document.getElementById('form-trip').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const c = db.contacts.find(x => x.id === currentContactId);
+            
+            const newTrip = {
+                id: Date.now(),
+                dest: document.getElementById('t-dest').value,
+                hotel: document.getElementById('t-hotel').value,
+                in: document.getElementById('t-in').value,
+                out: document.getElementById('t-out').value,
+                price: document.getElementById('t-price').value,
+                status: document.getElementById('t-status').value,
+                notes: document.getElementById('t-notes').value
+            };
+            
+            c.trips.push(newTrip);
+            saveData();
+            renderTrips();
+            closeAllModals();
+        });
+
+        // INICIALIZAÇÃO
         loadData();
 
     </script>
