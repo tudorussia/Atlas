@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ATLAS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #0c0e12;
@@ -569,9 +569,6 @@ body {
 <body>
 <div id="app-root">
 
-<!-- ══════════════════════════════════════
-     SCREEN: HOME (Leads & Clientes)
-═══════════════════════════════════════ -->
 <div class="screen active" id="screen-home">
   <div class="topbar">
     <div>
@@ -581,7 +578,6 @@ body {
   </div>
 
   <div class="scroll-body">
-    <!-- Stats -->
     <div style="padding:20px 16px 12px">
       <div class="stats-row" style="padding:0;margin-bottom:0">
         <div class="stat-box gold">
@@ -607,7 +603,6 @@ body {
       </div>
     </div>
 
-    <!-- Search -->
     <div class="search-wrap">
       <div class="search-box">
         <span class="search-icon">⌕</span>
@@ -615,7 +610,6 @@ body {
       </div>
     </div>
 
-    <!-- Chips -->
     <div class="chips" id="chips-bar">
       <div class="chip active" onclick="setFilter(this,'')" data-filter="">TODOS</div>
       <div class="chip" onclick="setFilter(this,'novo')" data-filter="novo">NOVO</div>
@@ -624,15 +618,12 @@ body {
       <div class="chip" onclick="setFilter(this,'inativo')" data-filter="inativo">INATIVO</div>
     </div>
 
-    <!-- List -->
     <div class="section-label" id="list-count-label">— CONTATOS</div>
     <div class="leads-list" id="leads-list"></div>
   </div>
 
-  <!-- FAB -->
   <button class="fab" onclick="openLeadSheet(null)">+</button>
 
-  <!-- Bottom Nav -->
   <div class="bottom-nav" id="bottom-nav-home">
     <div class="nav-tab active" onclick="/* already here */">
       <span class="icon">◈</span>
@@ -652,9 +643,6 @@ body {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SCREEN: DETAIL
-═══════════════════════════════════════ -->
 <div class="screen" id="screen-detail">
   <div class="topbar">
     <div class="back-btn" onclick="goBack()">‹</div>
@@ -680,9 +668,6 @@ body {
   <div class="scroll-body" id="detail-body"></div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SCREEN: ALL TASKS
-═══════════════════════════════════════ -->
 <div class="screen" id="screen-tasks">
   <div class="topbar">
     <div class="back-btn" onclick="goBack()">‹</div>
@@ -693,9 +678,6 @@ body {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SCREEN: ALL TRIPS
-═══════════════════════════════════════ -->
 <div class="screen" id="screen-trips-all">
   <div class="topbar">
     <div class="back-btn" onclick="goBack()">‹</div>
@@ -706,9 +688,6 @@ body {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SHEET: LEAD FORM
-═══════════════════════════════════════ -->
 <div class="sheet-overlay" id="overlay-lead" onclick="closeLeadSheet()"></div>
 <div class="sheet" id="sheet-lead">
   <div class="sheet-handle"></div>
@@ -771,9 +750,6 @@ body {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SHEET: TRIP FORM
-═══════════════════════════════════════ -->
 <div class="sheet-overlay" id="overlay-trip" onclick="closeTripSheet()"></div>
 <div class="sheet" id="sheet-trip">
   <div class="sheet-handle"></div>
@@ -825,7 +801,6 @@ body {
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -840,39 +815,39 @@ let editingLeadId = null;
 let tripLeadId = null;
 let screenStack = ['screen-home'];
 
-// ── IndexedDB storage (persists on iOS PWA / Safari) ──
-const IDB_NAME = 'atlas_db';
-const IDB_STORE = 'data';
-let idb = null;
+// ── SUPABASE CONFIGURATION ──
+const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function openIDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = e => {
-      e.target.result.createObjectStore(IDB_STORE);
-    };
-    req.onsuccess = e => { idb = e.target.result; resolve(idb); };
-    req.onerror = () => reject(req.error);
-  });
+// Salva os dados na nuvem (Supabase)
+async function saveDB() {
+  const { error } = await supabase
+    .from('atlas_data')
+    .upsert({ id: 'atlas_v2', data: db });
+    
+  if (error) {
+    console.error("Erro ao salvar:", error);
+    toast('⚠ Erro ao sincronizar');
+  }
 }
 
-function saveDB() {
-  if (!idb) return;
-  const tx = idb.transaction(IDB_STORE, 'readwrite');
-  tx.objectStore(IDB_STORE).put(JSON.stringify(db), 'atlas_v2');
-}
+// Carrega os dados da nuvem (Supabase)
+async function loadDB() {
+  const { data, error } = await supabase
+    .from('atlas_data')
+    .select('data')
+    .eq('id', 'atlas_v2')
+    .single();
 
-function loadDB() {
-  return new Promise(resolve => {
-    if (!idb) { resolve(); return; }
-    const tx = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).get('atlas_v2');
-    req.onsuccess = () => {
-      try { if (req.result) db = JSON.parse(req.result); } catch(e) {}
-      resolve();
-    };
-    req.onerror = () => resolve();
-  });
+  if (error) {
+    console.error("Erro ao carregar dados:", error);
+    return;
+  }
+
+  if (data && data.data) {
+    db = data.data;
+  }
 }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -1427,7 +1402,7 @@ function toast(msg) {
 // ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
-openIDB().then(() => loadDB()).then(() => renderHome());
+loadDB().then(() => renderHome());
 </script>
 </body>
 </html>
