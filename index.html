@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ATLAS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e12;
+  --s1: #12151b;
+  --s2: #181c24;
+  --s3: #1f2430;
+  --border: #252c3a;
+  --border2: #323d52;
+  --gold: #e8a020;
+  --gold2: #c8881a;
+  --gold-bg: rgba(232,160,32,0.1);
+  --gold-bg2: rgba(232,160,32,0.06);
+  --green: #34c77b;
+  --green-bg: rgba(52,199,123,0.12);
+  --blue: #4a9eff;
+  --blue-bg: rgba(74,158,255,0.12);
+  --red: #ff5a5a;
+  --red-bg: rgba(255,90,90,0.12);
+  --yellow: #ffd166;
+  --text: #b8c4d8;
+  --text2: #6b7a94;
+  --text3: #3d4a60;
+  --white: #edf2fc;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
+  overflow: hidden;
+}
+.screen.active { transform: translateX(0); }
+.screen.behind { transform: translateX(-6%); }
+
+.topbar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--white);
+  flex: 1;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--text2);
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  font-size: 16px; color: var(--text);
+  transition: all 0.15s;
+}
+.back-btn:active { background: var(--s3); }
+
+.scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  z-index: 50;
+}
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  gap: 4px;
+}
+.nav-tab .icon { font-size: 20px; }
+.nav-tab .label { font-family: var(--mono); font-size: 9px; color: var(--text2); }
+.nav-tab.active .label { color: var(--gold); }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+.stat-box {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 2px; }
+.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--white); }
+
+.search-wrap { padding: 0 16px 12px; }
+.search-box {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+}
+.search-box input { background: none; border: none; outline: none; color: var(--white); flex: 1; }
+
+.leads-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.lead-row {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--s3); border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); color: var(--gold); flex-shrink: 0;
+}
+
+.fab {
+  position: fixed; bottom: calc(72px + var(--safe-bottom)); right: 20px;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--gold); color: #000;
+  font-size: 26px; display: flex; align-items: center; justify-content: center;
+  z-index: 40; border: none;
+}
+
+.sheet-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--s1); border-radius: 20px 20px 0 0;
+  z-index: 101; transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  padding-bottom: var(--safe-bottom);
+}
+.sheet.open { transform: translateY(0); }
+
+.f-input, .f-select, .f-textarea {
+  width: 100%; background: var(--s2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--white); padding: 12px 14px;
+  margin-bottom: 10px; outline: none;
+}
+
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--s2); border: 1px solid var(--gold2);
+  border-radius: 30px; padding: 10px 20px;
+  font-family: var(--mono); color: var(--gold); z-index: 200;
+  opacity: 0; transition: all 0.25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="app-root">
+  <div class="screen active" id="screen-home">
+    <div class="topbar">
+      <div class="topbar-title" style="color:var(--gold);letter-spacing:3px">ATLAS</div>
+    </div>
+    <div class="scroll-body">
+      <div class="stats-row" style="margin-top:20px">
+        <div class="stat-box"><div class="stat-label">TOTAL</div><div class="stat-val" id="s-total">0</div></div>
+        <div class="stat-box"><div class="stat-label">TAREFAS</div><div class="stat-val" id="s-tasks">0</div></div>
+      </div>
+      <div class="search-wrap">
+        <div class="search-box"><input type="search" id="search-input" placeholder="Buscar..." oninput="renderHome()"></div>
+      </div>
+      <div class="leads-list" id="leads-list"></div>
+    </div>
+    <button class="fab" onclick="openLeadSheet()">+</button>
+  </div>
+
+  <div class="sheet-overlay" id="overlay-lead" onclick="closeLeadSheet()"></div>
+  <div class="sheet" id="sheet-lead">
+    <div style="padding:20px">
+      <input class="f-input" id="f-name" placeholder="Nome">
+      <input class="f-input" id="f-phone" placeholder="Telefone">
+      <select class="f-select" id="f-status">
+        <option value="novo">Novo</option>
+        <option value="lead">Lead</option>
+        <option value="cliente">Cliente</option>
+      </select>
+      <button class="fab" style="position:static; width:100%; border-radius:8px" onclick="saveLead()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURAÇÃO DO BANCO DE DADOS ──
+const BIN_ID = "69f2a4cf856a6821898b51d0"; 
+const API_KEY = "$2a$10$dhzKzcr352sQVzbe1jCeFuFSu22MYZBByhqPlCdM0YjK1J6OSi7Vq";
+
+let db = { leads: [] };
+
+async function saveDB() {
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify(db)
+    });
+  } catch (e) { toast('Erro ao salvar'); }
+}
+
+async function loadDB() {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const data = await res.json();
+    if (data.record) db = data.record;
+    renderHome();
+  } catch (e) { toast('Erro ao carregar'); }
+}
+
+function renderHome() {
+  const container = document.getElementById('leads-list');
+  document.getElementById('s-total').textContent = db.leads.length;
+  
+  container.innerHTML = db.leads.map(l => `
+    <div class="lead-row">
+      <div class="avatar">${l.name[0]}</div>
+      <div style="flex:1">
+        <div style="color:white">${l.name}</div>
+        <div style="font-size:12px; color:gray">${l.phone}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openLeadSheet() {
+  document.getElementById('overlay-lead').classList.add('open');
+  document.getElementById('sheet-lead').classList.add('open');
+}
+
+function closeLeadSheet() {
+  document.getElementById('overlay-lead').classList.remove('open');
+  document.getElementById('sheet-lead').classList.remove('open');
+}
+
+function saveLead() {
+  const name = document.getElementById('f-name').value;
+  const phone = document.getElementById('f-phone').value;
+  if (!name) return;
+  
+  db.leads.unshift({ id: Date.now(), name, phone, status: document.getElementById('f-status').value });
+  saveDB();
+  closeLeadSheet();
+  renderHome();
+  toast('Salvo!');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Inicia o App
+loadDB();
+</script>
+
+</body>
+</html>
