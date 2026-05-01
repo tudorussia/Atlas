@@ -455,9 +455,12 @@ body {
 .global-lead-header {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 0 8px; cursor: pointer;
+  -webkit-user-select: none; user-select: none;
 }
 .global-lead-name { font-family: var(--mono); font-size: 12px; color: var(--gold); flex: 1; }
 .global-lead-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+.link-btn { background: none; border: none; color: var(--text3); cursor: pointer; padding: 4px; font-size: 16px; }
+.link-btn:active { color: var(--gold); }
 
 /* ── GLOBAL TRIPS ── */
 .trip-lead-name {
@@ -834,8 +837,12 @@ let currentLeadId = null;
 let currentDetailTab = 'info';
 let editingLeadId = null;
 let tripLeadId = null;
-let editingTripIndex = null; // Variável nova para controlar se estamos editando
+let editingTripIndex = null;
 let screenStack = ['screen-home'];
+
+// Controle de Acordeão para Telas Globais
+let collapsedTasks = {};
+let collapsedTrips = {};
 
 const SUPABASE_URL = 'https://ulxjamnjoyvevbhfhjui.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVseGphbW5qb3l2ZXZiaGZoanVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTMyODMsImV4cCI6MjA5MzA4OTI4M30.TewGZi4NYaqTQyevkAuQbFXm0dkUkQeWkmjQg9aRVeg';
@@ -1384,27 +1391,48 @@ function handlePhotoUpload(event) {
 }
 
 // ══════════════════════════════════════
-//  GLOBAL SCREENS
+//  GLOBAL SCREENS CONTROLLERS
 // ══════════════════════════════════════
+function toggleGlobalTasks(e, leadId) {
+  e.stopPropagation();
+  collapsedTasks[leadId] = !collapsedTasks[leadId];
+  renderGlobalTasks();
+}
+
+function toggleGlobalTrips(e, leadId) {
+  e.stopPropagation();
+  collapsedTrips[leadId] = !collapsedTrips[leadId];
+  renderGlobalTrips();
+}
+
 function renderGlobalTasks() {
   const container = document.getElementById('global-tasks-body');
   let html = '';
   db.leads.forEach(l => {
     const pending = (l.tasks||[]).filter(t=>!t.done);
     if (!pending.length) return;
+    
+    const isCollapsed = collapsedTasks[l.id];
+    const chevron = isCollapsed ? '▶' : '▼';
+
     html += `<div style="margin-bottom:20px">
-      <div class="global-lead-header" onclick="openDetail('${l.id}');goTo('screen-detail')">
-        <div class="global-lead-name">${l.name}</div>
-        <div class="global-lead-count">${pending.length} pendente${pending.length!==1?'s':''} →</div>
+      <div class="global-lead-header" onclick="toggleGlobalTasks(event, '${l.id}')">
+        <div class="global-lead-name">${chevron} ${l.name}</div>
+        <div class="global-lead-count">${pending.length} pendente${pending.length!==1?'s':''}</div>
+        <button class="link-btn" title="Ir para o cliente" onclick="event.stopPropagation();openDetail('${l.id}');goTo('screen-detail')">↗</button>
       </div>`;
-    pending.forEach(t => {
-      const realIdx = l.tasks.indexOf(t);
-      html += `<div class="task-item">
-        <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
-        <div class="task-text">${t.text}</div>
-        <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
-      </div>`;
-    });
+    
+    if (!isCollapsed) {
+      pending.forEach(t => {
+        const realIdx = l.tasks.indexOf(t);
+        html += `<div class="task-item">
+          <input type="checkbox" class="task-check" onchange="toggleTask('${l.id}',${realIdx});renderGlobalTasks()">
+          <div class="task-text">${t.text}</div>
+          <button class="task-del" onclick="deleteTask('${l.id}',${realIdx});renderGlobalTasks()">×</button>
+        </div>`;
+      });
+    }
+    
     html += '</div>';
   });
   if (!html) html = `<div class="empty-state"><div class="empty-icon">◻</div><div>Nenhuma tarefa pendente 🎉</div></div>`;
@@ -1417,21 +1445,32 @@ function renderGlobalTrips() {
   const statusMap = {cotação:'sp-cotação',confirmado:'sp-confirmado',pago:'sp-pago',concluído:'sp-concluído'};
   db.leads.forEach(l => {
     if (!(l.trips||[]).length) return;
+
+    const isCollapsed = collapsedTrips[l.id];
+    const chevron = isCollapsed ? '▶' : '▼';
+
     html += `<div style="margin-bottom:20px">
-      <div class="trip-lead-name">${l.name.toUpperCase()}</div>`;
-    l.trips.forEach(t => {
-      html += `<div class="trip-card">
-        <div class="trip-top">
-          <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
-          <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
-        </div>
-        <div class="trip-grid">
-          <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
-          <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
-          ${t.transport ? `<div><div class="trip-field-label">TRANSPORTE</div><div class="trip-field-val">${t.transport} ${t.transportStatus ? `- ${t.transportStatus}` : ''}</div></div>` : ''}
-        </div>
+      <div class="global-lead-header" onclick="toggleGlobalTrips(event, '${l.id}')">
+        <div class="global-lead-name" style="color:var(--text2); letter-spacing:1px; font-size:10px;">${chevron} ${l.name.toUpperCase()}</div>
+        <div class="global-lead-count">${l.trips.length} viagem${l.trips.length!==1?'ns':''}</div>
+        <button class="link-btn" title="Ir para o cliente" onclick="event.stopPropagation();openDetail('${l.id}');goTo('screen-detail')">↗</button>
       </div>`;
-    });
+      
+    if (!isCollapsed) {
+      l.trips.forEach(t => {
+        html += `<div class="trip-card">
+          <div class="trip-top">
+            <div><div class="trip-city">✦ ${t.city}</div><div class="trip-dates">${fmtDate(t.checkin)} → ${fmtDate(t.checkout)}</div></div>
+            <span class="status-pill ${statusMap[t.status]||'sp-cotação'}">${(t.status||'cotação').toUpperCase()}</span>
+          </div>
+          <div class="trip-grid">
+            <div><div class="trip-field-label">HOTEL</div><div class="trip-field-val">${t.hotel||'—'}</div></div>
+            <div><div class="trip-field-label">PREÇO</div><div class="trip-field-val price">${fmtMoney(t.price)}</div></div>
+            ${t.transport ? `<div><div class="trip-field-label">TRANSPORTE</div><div class="trip-field-val">${t.transport} ${t.transportStatus ? `- ${t.transportStatus}` : ''}</div></div>` : ''}
+          </div>
+        </div>`;
+      });
+    }
     html += '</div>';
   });
   if (!html) html = `<div class="empty-state"><div class="empty-icon">✦</div><div>Nenhuma viagem cadastrada</div></div>`;
